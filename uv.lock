@@ -925,6 +925,7 @@ dependencies = [
     { name = "gunicorn" },
     { name = "psycopg2-binary" },
     { name = "replit" },
+    { name = "sqlalchemy" },
     { name = "werkzeug" },
 ]
 
@@ -938,6 +939,7 @@ requires-dist = [
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "replit", specifier = ">=4.1.2" },
+    { name = "sqlalchemy", specifier = ">=2.0.41" },
     { name = "werkzeug", specifier = ">=3.1.3" },
 ]
 
