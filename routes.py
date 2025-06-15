@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import json
 import uuid
 
-from app import app
+from app import app, db
 from models import User, Product, Sale, License, Payment, Settings
 from models_extended import Customer, Expense, BusinessUser, GlobalSettings, AuditLog
 from auth import check_license_required, role_required, superadmin_required, check_business_blocked
@@ -374,43 +374,7 @@ def admin_panel():
     
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/dashboard')
-@login_required
-def admin_dashboard():
-    if current_user.email != 'admin@comolor.com' and current_user.role != 'superadmin':
-        flash('Access denied. Superadmin only.', 'error')
-        return redirect(url_for('login'))
-    
-    businesses = get_all_businesses()
-    all_payments = get_all_payments()
-    total_revenue = calculate_total_revenue()
-    
-    # Get pending payments
-    pending_payments = [p for p in all_payments if p['status'] == 'pending']
-    
-    # Get license statistics
-    active_licenses = 0
-    expired_licenses = 0
-    
-    for business in businesses:
-        license_obj = License.get(business['id'])
-        if license_obj and license_obj.is_active():
-            active_licenses += 1
-        else:
-            expired_licenses += 1
-    
-    stats = {
-        'total_businesses': len(businesses),
-        'active_licenses': active_licenses,
-        'expired_licenses': expired_licenses,
-        'pending_payments': len(pending_payments),
-        'total_revenue': total_revenue
-    }
-    
-    return render_template('admin_panel.html', 
-                         businesses=businesses,
-                         payments=all_payments,
-                         stats=stats)
+# Old admin_dashboard function removed to avoid conflicts
 
 @app.route('/admin/confirm-payment', methods=['POST'])
 @login_required
@@ -594,3 +558,363 @@ def users():
     business_users = BusinessUser.get_all(current_user.business_id)
     
     return render_template('users.html', users=business_users)
+
+# ========== SUPERADMIN ROUTES ==========
+
+@app.route('/admin')
+@superadmin_required
+def superadmin_dashboard():
+    """Main superadmin dashboard"""
+    # Get all businesses with their license info
+    businesses = get_all_businesses()
+    
+    # Get payment statistics
+    all_payments = get_all_payments()
+    pending_payments = [p for p in all_payments if p.status == 'pending']
+    confirmed_payments = [p for p in all_payments if p.status == 'confirmed']
+    
+    # Calculate statistics
+    active_licenses = 0
+    expired_licenses = 0
+    blocked_businesses = 0
+    
+    for business in businesses:
+        if business.is_blocked:
+            blocked_businesses += 1
+        
+        license_obj = License.get(business.business_id)
+        if license_obj and license_obj.is_active():
+            active_licenses += 1
+        else:
+            expired_licenses += 1
+    
+    total_revenue = calculate_total_revenue()
+    
+    # Get global settings
+    global_settings = GlobalSettings.get()
+    
+    # Get recent audit logs
+    recent_logs = AuditLog.get_all(limit=10)
+    
+    stats = {
+        'total_businesses': len(businesses),
+        'active_licenses': active_licenses,
+        'expired_licenses': expired_licenses,
+        'blocked_businesses': blocked_businesses,
+        'pending_payments': len(pending_payments),
+        'confirmed_payments': len(confirmed_payments),
+        'total_revenue': total_revenue
+    }
+    
+    return render_template('admin_dashboard.html', 
+                         businesses=businesses,
+                         payments=all_payments,
+                         stats=stats,
+                         global_settings=global_settings,
+                         recent_logs=recent_logs)
+
+@app.route('/admin/businesses')
+@superadmin_required
+def admin_businesses():
+    """View and manage all businesses"""
+    businesses = get_all_businesses()
+    
+    # Add license info to each business
+    for business in businesses:
+        license_obj = License.get(business.business_id)
+        business.license_status = 'Active' if license_obj and license_obj.is_active() else 'Expired'
+        business.license_expiry = license_obj.expiry_date if license_obj else None
+    
+    return render_template('admin_businesses.html', businesses=businesses)
+
+@app.route('/admin/business/<business_id>/toggle-block', methods=['POST'])
+@superadmin_required
+def toggle_business_block(business_id):
+    """Block or unblock a business"""
+    user = User.query.filter_by(business_id=business_id).first()
+    if user:
+        user.is_blocked = not user.is_blocked
+        db.session.commit()
+        
+        action = 'blocked' if user.is_blocked else 'unblocked'
+        
+        # Log the action
+        log = AuditLog(
+            admin_email=current_user.email,
+            action=f'Business {action}',
+            target_business_id=business_id,
+            details=f'Business "{user.business_name}" was {action}'
+        )
+        log.save()
+        
+        flash(f'Business {action} successfully!', 'success')
+    else:
+        flash('Business not found.', 'error')
+    
+    return redirect(url_for('admin_businesses'))
+
+@app.route('/admin/payments')
+@superadmin_required
+def admin_payments():
+    """View all payments and process them"""
+    all_payments = get_all_payments()
+    
+    # Group payments by status
+    pending_payments = [p for p in all_payments if p.status == 'pending']
+    confirmed_payments = [p for p in all_payments if p.status == 'confirmed']
+    rejected_payments = [p for p in all_payments if p.status == 'rejected']
+    
+    return render_template('admin_payments.html',
+                         pending_payments=pending_payments,
+                         confirmed_payments=confirmed_payments,
+                         rejected_payments=rejected_payments)
+
+@app.route('/admin/payment/<payment_id>/process', methods=['POST'])
+@superadmin_required
+def process_payment(payment_id):
+    """Confirm or reject a payment"""
+    action = request.form['action']  # 'confirm' or 'reject'
+    
+    # Find the payment across all businesses
+    all_payments = get_all_payments()
+    payment_found = None
+    target_business_id = None
+    
+    for payment in all_payments:
+        if payment.payment_id == payment_id:
+            payment_found = payment
+            target_business_id = payment.business_id
+            break
+    
+    if payment_found:
+        # Update payment status
+        payments = Payment.get_all(target_business_id)
+        for payment in payments:
+            if payment.payment_id == payment_id:
+                payment.status = 'confirmed' if action == 'confirm' else 'rejected'
+                break
+        
+        Payment.save_all(target_business_id, payments)
+        
+        # If confirmed, update license
+        if action == 'confirm':
+            license_obj = License.get(target_business_id)
+            if not license_obj:
+                license_obj = License(target_business_id)
+            
+            license_obj.status = 'active'
+            license_obj.expiry_date = datetime.now() + timedelta(days=30)
+            license_obj.save()
+        
+        # Log the action
+        user = User.query.filter_by(business_id=target_business_id).first()
+        business_name = user.business_name if user else 'Unknown'
+        
+        log = AuditLog(
+            admin_email=current_user.email,
+            action=f'Payment {action}ed',
+            target_business_id=target_business_id,
+            details=f'Payment {payment_id} for "{business_name}" was {action}ed. Amount: KES {payment_found.amount}'
+        )
+        log.save()
+        
+        flash(f'Payment {action}ed successfully!', 'success')
+    else:
+        flash('Payment not found.', 'error')
+    
+    return redirect(url_for('admin_payments'))
+
+@app.route('/admin/settings', methods=['GET', 'POST'])
+@superadmin_required
+def admin_settings():
+    """Manage global system settings"""
+    global_settings = GlobalSettings.get()
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action == 'update_pricing':
+            new_price = float(request.form['license_price'])
+            old_price = float(global_settings.license_price)
+            global_settings.license_price = new_price
+            global_settings.save()
+            
+            # Log the change
+            log = AuditLog(
+                admin_email=current_user.email,
+                action='License price updated',
+                details=f'License price changed from KES {old_price} to KES {new_price}'
+            )
+            log.save()
+            
+            flash('License price updated successfully!', 'success')
+            
+        elif action == 'update_till':
+            new_till = request.form['till_number'].strip()
+            old_till = global_settings.till_number
+            global_settings.till_number = new_till
+            global_settings.save()
+            
+            # Log the change
+            log = AuditLog(
+                admin_email=current_user.email,
+                action='Till number updated',
+                details=f'Till number changed from {old_till} to {new_till}'
+            )
+            log.save()
+            
+            flash('Till number updated successfully!', 'success')
+            
+        elif action == 'update_terms':
+            new_terms = request.form['terms_content']
+            global_settings.terms_content = new_terms
+            global_settings.save()
+            
+            # Log the change
+            log = AuditLog(
+                admin_email=current_user.email,
+                action='Terms & Conditions updated',
+                details='Terms and conditions content was updated'
+            )
+            log.save()
+            
+            flash('Terms & Conditions updated successfully!', 'success')
+    
+    return render_template('admin_settings.html', global_settings=global_settings)
+
+@app.route('/admin/reports')
+@superadmin_required
+def admin_reports():
+    """View comprehensive system reports"""
+    # Get all businesses and their data
+    businesses = get_all_businesses()
+    all_payments = get_all_payments()
+    
+    # Calculate monthly revenue for the last 12 months
+    monthly_revenue = {}
+    for i in range(12):
+        month_date = datetime.now() - timedelta(days=30*i)
+        month_key = month_date.strftime('%Y-%m')
+        monthly_revenue[month_key] = 0
+    
+    for payment in all_payments:
+        if payment.status == 'confirmed':
+            payment_month = payment.created_at.strftime('%Y-%m')
+            if payment_month in monthly_revenue:
+                monthly_revenue[payment_month] += float(payment.amount)
+    
+    # Business registration trends
+    registration_trends = {}
+    for business in businesses:
+        reg_month = business.created_at.strftime('%Y-%m')
+        if reg_month not in registration_trends:
+            registration_trends[reg_month] = 0
+        registration_trends[reg_month] += 1
+    
+    # License status distribution
+    license_stats = {'active': 0, 'expired': 0, 'pending': 0}
+    for business in businesses:
+        license_obj = License.get(business.business_id)
+        if license_obj:
+            if license_obj.is_active():
+                license_stats['active'] += 1
+            else:
+                license_stats['expired'] += 1
+        else:
+            license_stats['pending'] += 1
+    
+    total_revenue = calculate_total_revenue()
+    
+    return render_template('admin_reports.html',
+                         businesses=businesses,
+                         monthly_revenue=monthly_revenue,
+                         registration_trends=registration_trends,
+                         license_stats=license_stats,
+                         total_revenue=total_revenue)
+
+@app.route('/admin/audit-logs')
+@superadmin_required
+def admin_audit_logs():
+    """View system audit logs"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 50
+    
+    logs = AuditLog.query.order_by(AuditLog.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return render_template('admin_audit_logs.html', logs=logs)
+
+@app.route('/admin/export-businesses')
+@superadmin_required
+def export_businesses():
+    """Export business data as CSV"""
+    import csv
+    from io import StringIO
+    from flask import make_response
+    
+    businesses = get_all_businesses()
+    
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['Business Name', 'Email', 'Phone', 'Business ID', 'Created Date', 'License Status', 'Is Blocked'])
+    
+    # Write data
+    for business in businesses:
+        license_obj = License.get(business.business_id)
+        license_status = 'Active' if license_obj and license_obj.is_active() else 'Expired'
+        
+        writer.writerow([
+            business.business_name,
+            business.email,
+            business.phone,
+            business.business_id,
+            business.created_at.strftime('%Y-%m-%d'),
+            license_status,
+            'Yes' if business.is_blocked else 'No'
+        ])
+    
+    output.seek(0)
+    
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = f'attachment; filename=businesses_{datetime.now().strftime("%Y%m%d")}.csv'
+    
+    # Log the export
+    log = AuditLog(
+        admin_email=current_user.email,
+        action='Business data exported',
+        details=f'Exported data for {len(businesses)} businesses'
+    )
+    log.save()
+    
+    return response
+
+@app.route('/admin/business/<business_id>/details')
+@superadmin_required
+def business_details(business_id):
+    """View detailed information about a specific business"""
+    user = User.query.filter_by(business_id=business_id).first_or_404()
+    license_obj = License.get(business_id)
+    payments = Payment.get_all(business_id)
+    
+    # Get business metrics
+    products = Product.get_all(business_id)
+    sales = Sale.get_all(business_id)
+    
+    # Calculate basic stats
+    total_sales = sum(float(sale.total) for sale in sales)
+    total_products = len(products)
+    
+    business_data = {
+        'user': user,
+        'license': license_obj,
+        'payments': payments,
+        'total_sales': total_sales,
+        'total_products': total_products,
+        'sales_count': len(sales)
+    }
+    
+    return render_template('admin_business_details.html', business=business_data)
