@@ -37,7 +37,7 @@ def create_test_business():
             license_obj = License(
                 business_id=test_user.business_id,
                 status='active',
-                expiry_date=(datetime.now() + timedelta(days=30)).isoformat()
+                expiry_date=datetime.now() + timedelta(days=30)
             )
             license_obj.save()
             logging.info(f"Created active license for test business")
