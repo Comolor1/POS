@@ -360,6 +360,16 @@ def settings():
             
             flash('Business settings updated successfully!', 'success')
         
+        elif action == 'upload_logo':
+            # Handle logo upload (for now, just save the URL)
+            logo_url = request.form.get('logo_url', '').strip()
+            if logo_url:
+                settings.logo_url = logo_url
+                settings.save()
+                flash('Logo updated successfully!', 'success')
+            else:
+                flash('Please provide a valid logo URL.', 'error')
+        
         elif action == 'change_password':
             current_password = request.form['current_password']
             new_password = request.form['new_password']
@@ -383,6 +393,40 @@ def settings():
     license_obj = License.get(current_user.business_id)
     
     return render_template('settings.html', settings=settings, license=license_obj)
+
+@app.route('/receipt-preview')
+@login_required
+@check_license_required
+def receipt_preview():
+    """Preview receipt template with sample data"""
+    settings = Settings.get(current_user.business_id)
+    if not settings:
+        settings = Settings(current_user.business_id, business_name=current_user.business_name)
+    
+    # Create sample sale data for preview
+    sample_sale = {
+        'sale_id': 'PREVIEW12345',
+        'created_at': datetime.now().isoformat(),
+        'items': [
+            {'name': 'Coffee', 'quantity': 2, 'price': 150.00},
+            {'name': 'Sandwich', 'quantity': 1, 'price': 250.00},
+            {'name': 'Tea', 'quantity': 1, 'price': 100.00}
+        ],
+        'total': 650.00,
+        'payment_method': 'mpesa',
+        'mpesa_ref': 'QX12345678',
+        'customer_name': 'Sample Customer'
+    }
+    
+    # Convert to object-like structure
+    class SampleSale:
+        def __init__(self, data):
+            for key, value in data.items():
+                setattr(self, key, value)
+    
+    sample_sale_obj = SampleSale(sample_sale)
+    
+    return render_template('receipt_preview.html', sale=sample_sale_obj, settings=settings)
 
 @app.route('/admin')
 def admin_panel():
