@@ -13,9 +13,13 @@ from utils import get_all_businesses, get_all_payments, calculate_total_revenue,
 
 @app.route('/')
 def index():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+    # Simple landing page without authentication checks
     return render_template('index.html')
+
+@app.route('/test')
+def test():
+    # Test route to verify application is working
+    return "<h1>Application is working!</h1><p><a href='/login'>Go to Login</a></p>"
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
