@@ -242,10 +242,8 @@ def pos():
 def process_sale():
     cart_items = json.loads(request.form['cart_items'])
     payment_method = request.form['payment_method']
-    mpesa_ref = request.form.get('mpesa_ref', '').strip()
     customer_name = request.form.get('customer_name', '').strip()
     customer_phone = request.form.get('customer_phone', '').strip()
-    mpesa_receipt_code = request.form.get('mpesa_receipt_code', '').strip()
     
     if not cart_items:
         flash('Cart is empty. Please add items before processing sale.', 'error')
@@ -261,38 +259,34 @@ def process_sale():
         cart_items,
         total,
         payment_method,
-        mpesa_ref if payment_method == 'mpesa' else None,
+        None,  # No longer using mpesa_ref field
         customer_name if customer_name else None
     )
     sales.append(new_sale)
     Sale.save_all(current_user.business_id, sales)
     
-    # Handle M-PESA transaction recording
-    if payment_method == 'mpesa' and mpesa_receipt_code and customer_phone:
+    # Handle M-PESA transaction recording (without receipt code requirement)
+    if payment_method == 'mpesa':
         from models_extended import MpesaTransaction
         
         # Get business settings for till number
         settings = Settings.get(current_user.business_id)
         till_number = settings.till_number if settings else 'Not Set'
         
-        # Check if transaction already exists
-        existing_transaction = MpesaTransaction.get_by_receipt_code(mpesa_receipt_code)
-        if not existing_transaction:
-            # Create new M-PESA transaction record
-            mpesa_transaction = MpesaTransaction(
-                business_id=current_user.business_id,
-                mpesa_receipt_code=mpesa_receipt_code,
-                customer_phone=customer_phone,
-                amount=total,
-                till_number=till_number,
-                customer_name=customer_name,
-                sale_id=new_sale.sale_id,
-                status='confirmed'
-            )
-            mpesa_transaction.save()
-        else:
-            # Link existing transaction to this sale
-            existing_transaction.link_to_sale(new_sale.sale_id)
+        # Create M-PESA transaction record with auto-generated receipt
+        auto_receipt_code = f"AUTO-{new_sale.sale_id[:8]}-{datetime.now().strftime('%H%M%S')}"
+        
+        mpesa_transaction = MpesaTransaction(
+            business_id=current_user.business_id,
+            mpesa_receipt_code=auto_receipt_code,
+            customer_phone=customer_phone or 'N/A',
+            amount=total,
+            till_number=till_number,
+            customer_name=customer_name,
+            sale_id=new_sale.sale_id,
+            status='confirmed'
+        )
+        mpesa_transaction.save()
     
     # Update product stock
     products = Product.get_all(current_user.business_id)

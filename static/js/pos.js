@@ -255,32 +255,18 @@ function processSale() {
 function confirmMpesaPayment() {
     const customerName = document.getElementById('customer_name').value.trim();
     const customerPhone = document.getElementById('customer_phone').value.trim();
-    const mpesaReceiptCode = document.getElementById('mpesa_receipt_code').value.trim().toUpperCase();
     
-    if (!customerPhone || !mpesaReceiptCode) {
-        showNotification('Please fill in all required fields', 'error');
-        return;
-    }
-    
-    // Phone number validation
-    if (!customerPhone.match(/^0\d{9}$/)) {
+    // Phone number validation if provided
+    if (customerPhone && !customerPhone.match(/^0\d{9}$/)) {
         showNotification('Please enter a valid phone number (e.g., 0712345678)', 'error');
-        return;
-    }
-    
-    // Receipt code validation (flexible length)
-    if (mpesaReceiptCode.length < 8) {
-        showNotification('Please enter a valid M-PESA receipt code', 'error');
         return;
     }
     
     // Prepare form data
     document.getElementById('form-cart-items').value = JSON.stringify(cart);
     document.getElementById('form-payment-method').value = 'mpesa';
-    document.getElementById('form-mpesa-ref').value = mpesaReceiptCode;
     document.getElementById('form-customer-name').value = customerName;
     document.getElementById('form-customer-phone').value = customerPhone;
-    document.getElementById('form-mpesa-receipt-code').value = mpesaReceiptCode;
     
     // Close modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('mpesaPaymentModal'));

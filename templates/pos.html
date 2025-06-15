@@ -222,6 +222,12 @@
                     Amount: <strong>KES <span id="modal-amount"></span></strong>
                 </div>
                 
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Confirm Payment Received:</strong><br>
+                    Only proceed when you have confirmed the M-PESA payment has been received in your account.
+                </div>
+                
                 <form id="mpesa-confirmation-form">
                     <div class="mb-3">
                         <label for="customer_name" class="form-label">Customer Name (Optional)</label>
@@ -230,16 +236,9 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="customer_phone" class="form-label">Customer Phone Number *</label>
+                        <label for="customer_phone" class="form-label">Customer Phone Number (Optional)</label>
                         <input type="tel" class="form-control" id="customer_phone" name="customer_phone" 
-                               placeholder="0712345678" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="mpesa_receipt_code" class="form-label">M-PESA Receipt Code *</label>
-                        <input type="text" class="form-control" id="mpesa_receipt_code" name="mpesa_receipt_code" 
-                               placeholder="QX12345678" required style="text-transform: uppercase;">
-                        <small class="form-text text-muted">Enter the M-PESA confirmation SMS code</small>
+                               placeholder="0712345678">
                     </div>
                 </form>
             </div>
