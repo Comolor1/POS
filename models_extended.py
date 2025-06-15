@@ -149,3 +149,50 @@ class AuditLog(db.Model):
     @staticmethod
     def get_all(limit=100):
         return AuditLog.query.order_by(AuditLog.created_at.desc()).limit(limit).all()
+
+class MpesaTransaction(db.Model):
+    __tablename__ = 'mpesa_transactions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    transaction_id = db.Column(db.String(36), nullable=False, unique=True, index=True)
+    business_id = db.Column(db.String(36), db.ForeignKey('users.business_id'), nullable=False, index=True)
+    mpesa_receipt_code = db.Column(db.String(100), nullable=False, unique=True)
+    customer_phone = db.Column(db.String(20), nullable=False)
+    customer_name = db.Column(db.String(200))
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    till_number = db.Column(db.String(20), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='confirmed')  # confirmed, pending, failed
+    sale_id = db.Column(db.String(36), db.ForeignKey('sales.sale_id'), nullable=True, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    # Relationship to sale
+    sale = db.relationship('Sale', backref='mpesa_payment', lazy=True, foreign_keys=[sale_id])
+    
+    def __init__(self, business_id, mpesa_receipt_code, customer_phone, amount, till_number, 
+                 customer_name=None, sale_id=None, status='confirmed', transaction_id=None):
+        self.transaction_id = transaction_id or str(uuid.uuid4())
+        self.business_id = business_id
+        self.mpesa_receipt_code = mpesa_receipt_code
+        self.customer_phone = customer_phone
+        self.customer_name = customer_name
+        self.amount = amount
+        self.till_number = till_number
+        self.status = status
+        self.sale_id = sale_id
+    
+    @staticmethod
+    def get_all(business_id):
+        return MpesaTransaction.query.filter_by(business_id=business_id).order_by(
+            MpesaTransaction.created_at.desc()).all()
+    
+    @staticmethod
+    def get_by_receipt_code(mpesa_receipt_code):
+        return MpesaTransaction.query.filter_by(mpesa_receipt_code=mpesa_receipt_code).first()
+    
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+    
+    def link_to_sale(self, sale_id):
+        self.sale_id = sale_id
+        db.session.commit()

@@ -215,11 +215,12 @@ class Settings(db.Model):
     footer_text = db.Column(db.Text)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
-    def __init__(self, business_id, business_name=None, logo_url=None, paybill=None, footer_text=None):
+    def __init__(self, business_id, business_name=None, logo_url=None, paybill=None, till_number=None, footer_text=None):
         self.business_id = business_id
         self.business_name = business_name
         self.logo_url = logo_url
         self.paybill = paybill
+        self.till_number = till_number
         self.footer_text = footer_text
     
     @staticmethod
@@ -232,6 +233,7 @@ class Settings(db.Model):
             existing.business_name = self.business_name
             existing.logo_url = self.logo_url
             existing.paybill = self.paybill
+            existing.till_number = self.till_number
             existing.footer_text = self.footer_text
         else:
             db.session.add(self)

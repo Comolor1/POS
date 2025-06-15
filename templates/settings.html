@@ -61,6 +61,13 @@
                             <small class="form-text text-muted">Your business M-PESA Paybill number for customer payments</small>
                         </div>
                         
+                        <div class="mb-3">
+                            <label for="till_number" class="form-label">M-PESA Till Number</label>
+                            <input type="text" class="form-control" id="till_number" name="till_number" 
+                                   value="{{ settings.till_number or '' }}" placeholder="123456">
+                            <small class="form-text text-muted">Your business M-PESA Till number for direct customer payments</small>
+                        </div>
+                        
                         <div class="mb-4">
                             <label for="footer_text" class="form-label">Receipt Footer Text</label>
                             <textarea class="form-control" id="footer_text" name="footer_text" rows="3" 

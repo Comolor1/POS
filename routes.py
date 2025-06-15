@@ -355,6 +355,7 @@ def settings():
             settings.business_name = request.form['business_name'].strip()
             settings.logo_url = request.form.get('logo_url', '').strip()
             settings.paybill = request.form.get('paybill', '').strip()
+            settings.till_number = request.form.get('till_number', '').strip()
             settings.footer_text = request.form.get('footer_text', '').strip()
             settings.save()
             
