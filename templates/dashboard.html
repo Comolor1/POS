@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Comolor POS{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Dashboard</h1>
+            <p class="text-muted">Welcome back, {{ current_user.business_name }}!</p>
+        </div>
+        <div>
+            <a href="{{ url_for('pos') }}" class="btn btn-primary">
+                <i class="fas fa-shopping-cart"></i> New Sale
+            </a>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Today's Sales</h6>
+                            <h3 class="mb-0">{{ stats.today_sales }}</h3>
+                            <small>{{ stats.today_total | currency }}</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">This Month</h6>
+                            <h3 class="mb-0">{{ stats.monthly_total | currency }}</h3>
+                            <small>Total Revenue</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Products</h6>
+                            <h3 class="mb-0">{{ stats.total_products }}</h3>
+                            <small>In Inventory</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-box fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Sales</h6>
+                            <h3 class="mb-0">{{ stats.total_sales }}</h3>
+                            <small>All Time</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-receipt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Recent Sales -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Recent Sales</h5>
+                    <a href="{{ url_for('reports') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_sales %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th>Items</th>
+                                    <th>Payment</th>
+                                    <th>Total</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sale in recent_sales %}
+                                <tr>
+                                    <td>{{ sale.created_at | datetime }}</td>
+                                    <td>{{ sale.customer_name or 'Walk-in Customer' }}</td>
+                                    <td>
+                                        <small>
+                                            {% for item in sale.items %}
+                                                {{ item.name }} ({{ item.quantity }}){% if not loop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if sale.payment_method == 'cash' %}
+                                            <span class="badge bg-success">Cash</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">M-PESA</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="fw-bold">{{ sale.total | currency }}</td>
+                                    <td>
+                                        <a href="{{ url_for('receipt', sale_id=sale.sale_id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-receipt"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-receipt fa-3x mb-3"></i>
+                        <p>No sales recorded yet</p>
+                        <a href="{{ url_for('pos') }}" class="btn btn-primary">Make Your First Sale</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('pos') }}" class="btn btn-primary">
+                            <i class="fas fa-shopping-cart"></i> New Sale
+                        </a>
+                        
+                        {% if current_user.role in ['admin', 'manager'] %}
+                        <a href="{{ url_for('products') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus"></i> Add Product
+                        </a>
+                        
+                        <a href="{{ url_for('reports') }}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-bar"></i> View Reports
+                        </a>
+                        {% endif %}
+                        
+                        {% if current_user.role == 'admin' %}
+                        <a href="{{ url_for('settings') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Business Info -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-building"></i> Business Info</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Business:</strong> {{ current_user.business_name }}</p>
+                    <p><strong>Owner:</strong> {{ current_user.email }}</p>
+                    <p><strong>Role:</strong> 
+                        <span class="badge bg-primary">{{ current_user.role.title() }}</span>
+                    </p>
+                    <hr>
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt"></i> 
+                            Secure & Licensed
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

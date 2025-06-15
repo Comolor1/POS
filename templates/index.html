@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to Comolor POS{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <h1 class="display-4 fw-bold text-primary mb-4">
+                        <i class="fas fa-cash-register"></i> Comolor POS
+                    </h1>
+                    <p class="lead mb-4">
+                        The complete Point of Sale solution for Kenyan small businesses. 
+                        Manage your inventory, process sales, track expenses, and grow your business with ease.
+                    </p>
+                    
+                    <div class="feature-list mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Product Management</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Sales Processing</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Receipt Printing</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> M-PESA Integration</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Sales Reports</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Multi-User Access</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="cta-buttons">
+                        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-3">
+                            <i class="fas fa-user-plus"></i> Get Started
+                        </a>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="hero-image text-center">
+                    <div class="pos-mockup bg-light rounded shadow-lg p-4">
+                        <div class="mockup-header bg-primary text-white p-3 rounded-top">
+                            <h5 class="mb-0"><i class="fas fa-cash-register"></i> POS System</h5>
+                        </div>
+                        <div class="mockup-body p-4">
+                            <div class="row mb-3">
+                                <div class="col-4">
+                                    <div class="product-card bg-primary text-white p-3 rounded text-center">
+                                        <i class="fas fa-coffee fa-2x mb-2"></i>
+                                        <p class="mb-0 small">Coffee</p>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="product-card bg-success text-white p-3 rounded text-center">
+                                        <i class="fas fa-cookie-bite fa-2x mb-2"></i>
+                                        <p class="mb-0 small">Snacks</p>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="product-card bg-warning text-white p-3 rounded text-center">
+                                        <i class="fas fa-bread-slice fa-2x mb-2"></i>
+                                        <p class="mb-0 small">Bread</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="receipt-preview bg-white border rounded p-3">
+                                <h6 class="text-center">Receipt Preview</h6>
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <span>Coffee</span>
+                                    <span>KES 50.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Snacks</span>
+                                    <span>KES 30.00</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Total</span>
+                                    <span>KES 80.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<section class="features-section py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Why Choose Comolor POS?</h2>
+            <p class="lead">Built specifically for Kenyan businesses with local needs in mind</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="feature-card text-center h-100 bg-white p-4 rounded shadow-sm">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-mobile-alt fa-3x text-primary"></i>
+                    </div>
+                    <h5>M-PESA Integration</h5>
+                    <p>Accept M-PESA payments seamlessly and track all transactions with reference codes.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="feature-card text-center h-100 bg-white p-4 rounded shadow-sm">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-chart-line fa-3x text-success"></i>
+                    </div>
+                    <h5>Sales Analytics</h5>
+                    <p>Get detailed reports on daily, weekly, and monthly sales to track your business growth.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="feature-card text-center h-100 bg-white p-4 rounded shadow-sm">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-users fa-3x text-warning"></i>
+                    </div>
+                    <h5>Multi-User Support</h5>
+                    <p>Create accounts for your staff with different permission levels - Admin, Manager, Cashier.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Section -->
+<section class="pricing-section py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Simple, Affordable Pricing</h2>
+            <p class="lead">One plan that grows with your business</p>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="pricing-card bg-primary text-white rounded shadow-lg p-4 text-center">
+                    <h3 class="mb-3">Monthly License</h3>
+                    <div class="price mb-4">
+                        <span class="display-4 fw-bold">KES 3,000</span>
+                        <span class="fs-6">/month</span>
+                    </div>
+                    
+                    <ul class="list-unstyled mb-4">
+                        <li class="mb-2"><i class="fas fa-check me-2"></i> Complete POS System</li>
+                        <li class="mb-2"><i class="fas fa-check me-2"></i> M-PESA Integration</li>
+                        <li class="mb-2"><i class="fas fa-check me-2"></i> Sales Reports</li>
+                        <li class="mb-2"><i class="fas fa-check me-2"></i> Multi-User Access</li>
+                        <li class="mb-2"><i class="fas fa-check me-2"></i> Receipt Printing</li>
+                        <li class="mb-2"><i class="fas fa-check me-2"></i> Customer Support</li>
+                    </ul>
+                    
+                    <div class="payment-info mb-4">
+                        <p class="mb-1"><strong>Pay via M-PESA</strong></p>
+                        <p class="mb-0">Till Number: <strong>123456</strong></p>
+                    </div>
+                    
+                    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg w-100">
+                        Start Your Free Trial
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <p class="text-muted">
+                <i class="fas fa-shield-alt me-2"></i>
+                Secure payments • No setup fees • Cancel anytime
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Comolor POS{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Settings</h1>
+            <p class="text-muted">Manage your business settings and preferences</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Business Settings -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-building"></i> Business Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="action" value="update_business">
+                        
+                        <div class="mb-3">
+                            <label for="business_name" class="form-label">Business Name *</label>
+                            <input type="text" class="form-control" id="business_name" name="business_name" 
+                                   value="{{ settings.business_name or current_user.business_name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="logo_url" class="form-label">Logo URL</label>
+                            <input type="url" class="form-control" id="logo_url" name="logo_url" 
+                                   value="{{ settings.logo_url or '' }}" placeholder="https://example.com/logo.png">
+                            <small class="form-text text-muted">Enter a URL to your business logo (optional)</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="paybill" class="form-label">M-PESA Paybill Number</label>
+                            <input type="text" class="form-control" id="paybill" name="paybill" 
+                                   value="{{ settings.paybill or '' }}" placeholder="123456">
+                            <small class="form-text text-muted">Your business M-PESA Paybill number for customer payments</small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="footer_text" class="form-label">Receipt Footer Text</label>
+                            <textarea class="form-control" id="footer_text" name="footer_text" rows="3" 
+                                      placeholder="Thank you for your business!">{{ settings.footer_text or 'Thank you for your business!' }}</textarea>
+                            <small class="form-text text-muted">This text will appear at the bottom of all receipts</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Business Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Change Password -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-lock"></i> Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="action" value="change_password">
+                        
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Current Password *</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password *</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="confirm_password" class="form-label">Confirm New Password *</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-key"></i> Change Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- License Info & Quick Stats -->
+        <div class="col-lg-4">
+            <!-- License Status -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-certificate"></i> License Status</h5>
+                </div>
+                <div class="card-body">
+                    {% if license %}
+                        {% if license.status == 'active' and license.is_active() %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>Active License</strong>
+                        </div>
+                        <p><strong>Status:</strong> <span class="badge bg-success">Active</span></p>
+                        <p><strong>Expires:</strong> {{ license.expiry_date | datetime }}</p>
+                        <p class="text-success mb-0">
+                            <i class="fas fa-shield-alt"></i> Your POS system is fully operational
+                        </p>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>License Expired</strong>
+                        </div>
+                        <p><strong>Status:</strong> <span class="badge bg-danger">Expired</span></p>
+                        {% if license.expiry_date %}
+                        <p><strong>Expired:</strong> {{ license.expiry_date | datetime }}</p>
+                        {% endif %}
+                        <a href="{{ url_for('pay_license') }}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-credit-card"></i> Renew License
+                        </a>
+                        {% endif %}
+                    {% else %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-times-circle"></i>
+                        <strong>No License</strong>
+                    </div>
+                    <p>No active license found.</p>
+                    <a href="{{ url_for('pay_license') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-credit-card"></i> Purchase License
+                    </a>
+                    {% endif %}
+                    
+                    <hr>
+                    <div class="text-center">
+                        <small class="text-muted">
+                            Monthly License Fee: <strong>KES 3,000</strong><br>
+                            Pay to Till Number: <strong>123456</strong>
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Account Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user"></i> Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Business:</strong> {{ current_user.business_name }}</p>
+                    <p><strong>Email:</strong> {{ current_user.email }}</p>
+                    <p><strong>Phone:</strong> {{ current_user.phone }}</p>
+                    <p><strong>Role:</strong> 
+                        <span class="badge bg-primary">{{ current_user.role.title() }}</span>
+                    </p>
+                    <p><strong>Member Since:</strong> {{ current_user.created_at | date }}</p>
+                </div>
+            </div>
+            
+            <!-- System Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> System Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>System:</strong> Comolor POS</p>
+                    <p><strong>Version:</strong> 1.0.0</p>
+                    <p><strong>Support:</strong> Business Hours</p>
+                    
+                    <hr>
+                    
+                    <div class="text-center">
+                        <a href="{{ url_for('terms') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-file-contract"></i> Terms & Conditions
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

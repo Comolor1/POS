@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Terms & Conditions - Comolor POS{% endblock %}
+
+{% block content %}
+<div class="terms-page py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="terms-content bg-white rounded shadow p-5">
+                    <h1 class="text-center text-primary mb-4">
+                        <i class="fas fa-file-contract"></i> Terms & Conditions
+                    </h1>
+                    
+                    <div class="alert alert-primary">
+                        <h5><i class="fas fa-credit-card"></i> Licensing and Payment Terms</h5>
+                    </div>
+                    
+                    <h3>1. License Fee</h3>
+                    <p>The monthly license fee for Comolor POS is <strong>KES 3,000 per month</strong>. This fee grants you access to all features and functionalities of the system for a period of 30 days from the date of payment confirmation.</p>
+                    
+                    <h3>2. Payment Method</h3>
+                    <p>All payments must be made via M-PESA to the following Till Number:</p>
+                    <div class="alert alert-success text-center">
+                        <h4><i class="fas fa-mobile-alt"></i> Till Number: <strong>123456</strong></h4>
+                        <p class="mb-0">Send exactly KES 3,000 to this till number</p>
+                    </div>
+                    
+                    <h3>3. Payment Verification</h3>
+                    <ul>
+                        <li>After making payment, you must submit your M-PESA transaction code through the system</li>
+                        <li>All payments are manually verified by our administrators</li>
+                        <li>License activation occurs only after payment confirmation</li>
+                        <li>Verification may take up to 24 hours during business days</li>
+                    </ul>
+                    
+                    <h3>4. License Duration and Renewal</h3>
+                    <ul>
+                        <li>Each license is valid for exactly 30 days from activation</li>
+                        <li>You will receive notifications before your license expires</li>
+                        <li>Access to the system will be suspended if license expires</li>
+                        <li>To continue using the system, you must renew your license before expiry</li>
+                    </ul>
+                    
+                    <h3>5. Refund Policy</h3>
+                    <p><strong>NO REFUNDS:</strong> All payments are final and non-refundable. This includes but not limited to:</p>
+                    <ul>
+                        <li>Partial month usage</li>
+                        <li>Service dissatisfaction</li>
+                        <li>Early termination</li>
+                        <li>Technical issues on user's end</li>
+                    </ul>
+                    
+                    <h3>6. Service Requirements</h3>
+                    <ul>
+                        <li>An active license is required to access all system features</li>
+                        <li>System access is restricted immediately upon license expiration</li>
+                        <li>Your business data remains secure but inaccessible until license renewal</li>
+                    </ul>
+                    
+                    <h3>7. User Responsibilities</h3>
+                    <ul>
+                        <li>Maintain accurate payment records and M-PESA transaction codes</li>
+                        <li>Ensure timely license renewals to avoid service interruption</li>
+                        <li>Keep login credentials secure and confidential</li>
+                        <li>Use the system only for legitimate business purposes</li>
+                    </ul>
+                    
+                    <h3>8. System Availability</h3>
+                    <p>While we strive for 99.9% uptime, Comolor POS is provided "as is" without guarantees of uninterrupted service. We are not liable for any business losses due to system downtime.</p>
+                    
+                    <h3>9. Data Ownership and Privacy</h3>
+                    <ul>
+                        <li>You retain full ownership of your business data</li>
+                        <li>We implement appropriate security measures to protect your data</li>
+                        <li>Data is isolated per business and not shared with other users</li>
+                        <li>We do not sell or share your data with third parties</li>
+                    </ul>
+                    
+                    <h3>10. Termination</h3>
+                    <p>We reserve the right to terminate access for:</p>
+                    <ul>
+                        <li>Non-payment of license fees</li>
+                        <li>Violation of these terms</li>
+                        <li>Fraudulent or illegal activities</li>
+                        <li>System abuse or misuse</li>
+                    </ul>
+                    
+                    <h3>11. Support and Updates</h3>
+                    <ul>
+                        <li>Technical support is provided during business hours</li>
+                        <li>System updates and improvements are included in the license fee</li>
+                        <li>New features may be added without additional charges</li>
+                    </ul>
+                    
+                    <h3>12. Governing Law</h3>
+                    <p>These terms are governed by the laws of Kenya. Any disputes will be resolved in Kenyan courts.</p>
+                    
+                    <div class="alert alert-warning mt-4">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Important Notice</h5>
+                        <p class="mb-0">By registering for Comolor POS, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. Continued use of the service constitutes acceptance of any updates to these terms.</p>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <p><strong>Last Updated:</strong> {{ moment().format('MMMM DD, YYYY') }}</p>
+                        
+                        {% if not current_user.is_authenticated %}
+                        <div class="mt-4">
+                            <a href="{{ url_for('register') }}" class="btn btn-primary me-3">
+                                <i class="fas fa-user-plus"></i> I Agree - Register Now
+                            </a>
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Home
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

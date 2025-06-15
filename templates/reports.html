@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Comolor POS{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="reports-page">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Sales Reports</h1>
+            <p class="text-muted">Analyze your business performance</p>
+        </div>
+    </div>
+    
+    <!-- Date Range Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">&nbsp;</label>
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                        <a href="{{ url_for('reports') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Sales</h6>
+                            <h3 class="mb-0">{{ total_sales }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-receipt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Revenue</h6>
+                            <h3 class="mb-0">{{ total_revenue | currency }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Cash Sales</h6>
+                            <h3 class="mb-0">{{ cash_sales | currency }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-money-bill fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">M-PESA Sales</h6>
+                            <h3 class="mb-0">{{ mpesa_sales | currency }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-mobile-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Daily Sales Chart -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Daily Sales Trend</h5>
+                </div>
+                <div class="card-body">
+                    {% if daily_sales %}
+                    <canvas id="dailySalesChart" width="400" height="200"></canvas>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-chart-line fa-3x mb-3"></i>
+                        <p>No sales data available for the selected period</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payment Methods Chart -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Payment Methods</h5>
+                </div>
+                <div class="card-body">
+                    {% if total_revenue > 0 %}
+                    <canvas id="paymentMethodsChart" width="200" height="200"></canvas>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-chart-pie fa-3x mb-3"></i>
+                        <p>No payment data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sales Details -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-list"></i> Sales Details</h5>
+            {% if sales %}
+            <button class="btn btn-sm btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Print Report
+            </button>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if sales %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Payment Method</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                        <tr>
+                            <td>{{ sale.created_at | datetime }}</td>
+                            <td>{{ sale.customer_name or 'Walk-in Customer' }}</td>
+                            <td>
+                                <small>
+                                    {% for item in sale.items %}
+                                        {{ item.name }} ({{ item.quantity }}){% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                </small>
+                            </td>
+                            <td>
+                                {% if sale.payment_method == 'cash' %}
+                                    <span class="badge bg-success">Cash</span>
+                                {% else %}
+                                    <span class="badge bg-primary">M-PESA</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold">{{ sale.total | currency }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-receipt fa-3x mb-3"></i>
+                <h5>No Sales Data</h5>
+                <p>No sales found for the selected date range.</p>
+                <a href="{{ url_for('pos') }}" class="btn btn-primary">
+                    <i class="fas fa-shopping-cart"></i> Make a Sale
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if daily_sales %}
+<script>
+// Daily Sales Chart
+const dailyCtx = document.getElementById('dailySalesChart').getContext('2d');
+const dailySalesData = {
+    labels: [
+        {% for date, data in daily_sales.items() %}
+        '{{ date.strftime("%d/%m") }}',
+        {% endfor %}
+    ],
+    datasets: [{
+        label: 'Daily Sales (KES)',
+        data: [
+            {% for date, data in daily_sales.items() %}
+            {{ data.total }},
+            {% endfor %}
+        ],
+        borderColor: 'rgb(54, 162, 235)',
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        tension: 0.1
+    }]
+};
+
+new Chart(dailyCtx, {
+    type: 'line',
+    data: dailySalesData,
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return 'KES ' + value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+
+{% if total_revenue > 0 %}
+<script>
+// Payment Methods Chart
+const paymentCtx = document.getElementById('paymentMethodsChart').getContext('2d');
+const paymentData = {
+    labels: ['Cash', 'M-PESA'],
+    datasets: [{
+        data: [{{ cash_sales }}, {{ mpesa_sales }}],
+        backgroundColor: [
+            'rgba(40, 167, 69, 0.8)',
+            'rgba(0, 123, 255, 0.8)'
+        ],
+        borderColor: [
+            'rgba(40, 167, 69, 1)',
+            'rgba(0, 123, 255, 1)'
+        ],
+        borderWidth: 2
+    }]
+};
+
+new Chart(paymentCtx, {
+    type: 'doughnut',
+    data: paymentData,
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

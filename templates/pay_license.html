@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}License Payment - Comolor POS{% endblock %}
+
+{% block content %}
+<div class="license-payment-page py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="payment-card bg-white rounded shadow-lg p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="text-primary">
+                            <i class="fas fa-credit-card"></i> License Payment
+                        </h2>
+                        <p class="text-muted">Complete your payment to activate your POS system</p>
+                    </div>
+                    
+                    <!-- Current License Status -->
+                    {% if license %}
+                    <div class="alert alert-{% if license.status == 'active' and license.is_active() %}success{% elif license.status == 'pending' %}warning{% else %}danger{% endif %} mb-4">
+                        <h5><i class="fas fa-info-circle"></i> Current License Status</h5>
+                        <p class="mb-2"><strong>Status:</strong> 
+                            {% if license.status == 'active' and license.is_active() %}
+                                <span class="badge bg-success">Active</span>
+                            {% elif license.status == 'pending' %}
+                                <span class="badge bg-warning">Pending Payment Confirmation</span>
+                            {% else %}
+                                <span class="badge bg-danger">Expired</span>
+                            {% endif %}
+                        </p>
+                        {% if license.expiry_date %}
+                        <p class="mb-0"><strong>Expires:</strong> {{ license.expiry_date | datetime }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Payment Instructions -->
+                    <div class="payment-instructions mb-4">
+                        <h4><i class="fas fa-mobile-alt"></i> M-PESA Payment Instructions</h4>
+                        
+                        <div class="step-by-step">
+                            <div class="step mb-3 p-3 bg-light rounded">
+                                <h6><span class="badge bg-primary">1</span> Send Payment via M-PESA</h6>
+                                <div class="payment-details text-center bg-success text-white p-3 rounded my-3">
+                                    <h4><i class="fas fa-mobile-alt"></i> Till Number: <strong>123456</strong></h4>
+                                    <h5>Amount: <strong>KES 3,000</strong></h5>
+                                </div>
+                                <p class="mb-0">
+                                    <strong>Steps:</strong><br>
+                                    • Go to M-PESA menu on your phone<br>
+                                    • Select "Lipa na M-PESA"<br>
+                                    • Select "Buy Goods and Services"<br>
+                                    • Enter Till Number: <strong>123456</strong><br>
+                                    • Enter Amount: <strong>3000</strong><br>
+                                    • Enter your M-PESA PIN and confirm
+                                </p>
+                            </div>
+                            
+                            <div class="step mb-3 p-3 bg-light rounded">
+                                <h6><span class="badge bg-primary">2</span> Submit Transaction Code</h6>
+                                <p class="mb-0">After successful payment, you'll receive an M-PESA confirmation SMS with a transaction code. Enter this code below along with your phone number.</p>
+                            </div>
+                            
+                            <div class="step mb-3 p-3 bg-light rounded">
+                                <h6><span class="badge bg-primary">3</span> Wait for Confirmation</h6>
+                                <p class="mb-0">Our admin will manually verify your payment and activate your license within 24 hours.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Submission Form -->
+                    <div class="payment-form">
+                        <h4><i class="fas fa-receipt"></i> Submit Payment Details</h4>
+                        
+                        <form method="POST">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="mpesa_code" class="form-label">M-PESA Transaction Code *</label>
+                                    <input type="text" class="form-control" id="mpesa_code" name="mpesa_code" 
+                                           placeholder="e.g., QHI2KMABC1" required>
+                                    <small class="form-text text-muted">Found in your M-PESA confirmation SMS</small>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone_number" class="form-label">Phone Number Used *</label>
+                                    <input type="tel" class="form-control" id="phone_number" name="phone_number" 
+                                           placeholder="0712345678" required>
+                                    <small class="form-text text-muted">Phone number used for M-PESA payment</small>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success btn-lg w-100">
+                                <i class="fas fa-paper-plane"></i> Submit Payment Details
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Previous Payments -->
+                    {% if payments %}
+                    <div class="previous-payments mt-5">
+                        <h4><i class="fas fa-history"></i> Payment History</h4>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>M-PESA Code</th>
+                                        <th>Phone</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for payment in payments %}
+                                    <tr>
+                                        <td>{{ payment.created_at | datetime }}</td>
+                                        <td><code>{{ payment.mpesa_code }}</code></td>
+                                        <td>{{ payment.phone_number }}</td>
+                                        <td>{{ payment.amount | currency }}</td>
+                                        <td>
+                                            {% if payment.status == 'confirmed' %}
+                                                <span class="badge bg-success">Confirmed</span>
+                                            {% elif payment.status == 'pending' %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Rejected</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Help Section -->
+                    <div class="help-section mt-5 p-4 bg-light rounded">
+                        <h5><i class="fas fa-question-circle"></i> Need Help?</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Payment Issues</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success"></i> Ensure you send exactly KES 3,000</li>
+                                    <li><i class="fas fa-check text-success"></i> Use the correct Till Number: 123456</li>
+                                    <li><i class="fas fa-check text-success"></i> Keep your M-PESA confirmation SMS</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Common Questions</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-clock text-info"></i> Verification takes up to 24 hours</li>
+                                    <li><i class="fas fa-ban text-danger"></i> Payments are non-refundable</li>
+                                    <li><i class="fas fa-calendar text-warning"></i> License valid for 30 days</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

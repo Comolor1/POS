@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Comolor POS{% endblock %}
+
+{% block content %}
+<div class="register-page min-vh-100 d-flex align-items-center py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="register-card bg-white rounded shadow-lg p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="text-primary">
+                            <i class="fas fa-cash-register"></i> Comolor POS
+                        </h2>
+                        <p class="text-muted">Create your business account</p>
+                    </div>
+                    
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="business_name" class="form-label">Business Name *</label>
+                            <input type="text" class="form-control" id="business_name" name="business_name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number *</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="e.g., 0712345678" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password *</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="confirm_password" class="form-label">Confirm Password *</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="terms_accepted" name="terms_accepted" required>
+                                <label class="form-check-label" for="terms_accepted">
+                                    I agree to the <a href="{{ url_for('terms') }}" target="_blank">Terms and Conditions</a> *
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>What happens next?</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Complete this registration form</li>
+                                <li>Make payment of KES 3,000 to Till Number <strong>123456</strong></li>
+                                <li>Submit your M-PESA transaction code for verification</li>
+                                <li>Start using your POS system once payment is confirmed</li>
+                            </ul>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="fas fa-user-plus"></i> Create Account
+                        </button>
+                    </form>
+                    
+                    <hr>
+                    
+                    <div class="text-center">
+                        <p class="mb-0">Already have an account?</p>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-sign-in-alt"></i> Sign In
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

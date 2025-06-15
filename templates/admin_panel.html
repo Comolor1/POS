@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - Comolor POS{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="admin-panel">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-crown text-warning"></i> Superadmin Panel
+            </h1>
+            <p class="text-muted">Manage all businesses and license payments</p>
+        </div>
+        <div>
+            <span class="badge bg-warning text-dark">Superadmin Access</span>
+        </div>
+    </div>
+    
+    <!-- Stats Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Businesses</h6>
+                            <h3 class="mb-0">{{ stats.total_businesses }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-building fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Active Licenses</h6>
+                            <h3 class="mb-0">{{ stats.active_licenses }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Pending Payments</h6>
+                            <h3 class="mb-0">{{ stats.pending_payments }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Revenue</h6>
+                            <h3 class="mb-0">{{ stats.total_revenue | currency }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Pending Payments -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-credit-card"></i> Pending Payment Confirmations
+                    </h5>
+                    <span class="badge bg-warning">{{ stats.pending_payments }} Pending</span>
+                </div>
+                <div class="card-body">
+                    {% set pending_payments = payments | selectattr("status", "equalto", "pending") | list %}
+                    {% if pending_payments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Business</th>
+                                    <th>M-PESA Code</th>
+                                    <th>Phone</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in pending_payments %}
+                                {% set business = businesses | selectattr("id", "equalto", payment.business_id) | first %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ business.name if business else 'Unknown' }}</strong><br>
+                                        <small class="text-muted">{{ business.owner_email if business else '' }}</small>
+                                    </td>
+                                    <td>
+                                        <code class="bg-light p-1 rounded">{{ payment.mpesa_code }}</code>
+                                    </td>
+                                    <td>{{ payment.phone_number }}</td>
+                                    <td>
+                                        <span class="fw-bold text-success">{{ payment.amount | currency }}</span>
+                                    </td>
+                                    <td>{{ payment.created_at | datetime }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('confirm_payment') }}" class="d-inline">
+                                            <input type="hidden" name="payment_id" value="{{ payment.payment_id }}">
+                                            <input type="hidden" name="business_id" value="{{ payment.business_id }}">
+                                            <input type="hidden" name="action" value="confirm">
+                                            <button type="submit" class="btn btn-sm btn-success me-1" 
+                                                    onclick="return confirm('Confirm this payment?')">
+                                                <i class="fas fa-check"></i> Confirm
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('confirm_payment') }}" class="d-inline">
+                                            <input type="hidden" name="payment_id" value="{{ payment.payment_id }}">
+                                            <input type="hidden" name="business_id" value="{{ payment.business_id }}">
+                                            <input type="hidden" name="action" value="reject">
+                                            <button type="submit" class="btn btn-sm btn-danger" 
+                                                    onclick="return confirm('Reject this payment?')">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                        <h5>All Caught Up!</h5>
+                        <p>No pending payments to review at the moment.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> License Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="license-stats">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Active Licenses:</span>
+                            <span class="badge bg-success">{{ stats.active_licenses }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Expired Licenses:</span>
+                            <span class="badge bg-danger">{{ stats.expired_licenses }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Total Businesses:</span>
+                            <span class="badge bg-primary">{{ stats.total_businesses }}</span>
+                        </div>
+                        
+                        {% if stats.total_businesses > 0 %}
+                        <div class="progress mb-2" style="height: 20px;">
+                            {% set active_percentage = (stats.active_licenses / stats.total_businesses * 100) | round(1) %}
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: {{ active_percentage }}%" 
+                                 aria-valuenow="{{ active_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ active_percentage }}% Active
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            License activation rate
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Revenue Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Revenue Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="revenue-stats">
+                        <div class="text-center mb-3">
+                            <h3 class="text-success">{{ stats.total_revenue | currency }}</h3>
+                            <p class="text-muted mb-0">Total Revenue</p>
+                        </div>
+                        
+                        {% set confirmed_payments = payments | selectattr("status", "equalto", "confirmed") | list %}
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Confirmed Payments:</span>
+                            <span class="badge bg-success">{{ confirmed_payments | length }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Average per Business:</span>
+                            <span class="fw-bold">
+                                {% if stats.total_businesses > 0 %}
+                                    {{ (stats.total_revenue / stats.total_businesses) | currency }}
+                                {% else %}
+                                    KES 0.00
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="text-center">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar"></i> 
+                                Monthly recurring revenue model
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- All Businesses -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-building"></i> All Businesses</h5>
+            <div>
+                <button class="btn btn-sm btn-outline-primary" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if businesses %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Business Name</th>
+                            <th>Owner</th>
+                            <th>Phone</th>
+                            <th>License Status</th>
+                            <th>Registered</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for business in businesses %}
+                        <tr>
+                            <td>
+                                <strong>{{ business.name }}</strong>
+                            </td>
+                            <td>{{ business.owner_email }}</td>
+                            <td>{{ business.phone }}</td>
+                            <td>
+                                {% set business_license = '' %}
+                                {% for payment in payments %}
+                                    {% if payment.business_id == business.id and payment.status == 'confirmed' %}
+                                        {% set business_license = 'active' %}
+                                        {% break %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if business_license == 'active' %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Expired/Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ business.created_at | date }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-outline-info" onclick="viewBusinessDetails('{{ business.id }}')" 
+                                            title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-outline-warning" onclick="manageLicense('{{ business.id }}')" 
+                                            title="Manage License">
+                                        <i class="fas fa-certificate"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-building fa-3x mb-3"></i>
+                <h5>No Businesses Registered</h5>
+                <p>Waiting for the first business to register...</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Payment History -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-history"></i> Recent Payment History</h5>
+        </div>
+        <div class="card-body">
+            {% if payments %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Business</th>
+                            <th>M-PESA Code</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments | sort(attribute='created_at', reverse=true) %}
+                        {% set business = businesses | selectattr("id", "equalto", payment.business_id) | first %}
+                        <tr>
+                            <td>{{ payment.created_at | datetime }}</td>
+                            <td>{{ business.name if business else 'Unknown' }}</td>
+                            <td><code>{{ payment.mpesa_code }}</code></td>
+                            <td>{{ payment.amount | currency }}</td>
+                            <td>
+                                {% if payment.status == 'confirmed' %}
+                                    <span class="badge bg-success">Confirmed</span>
+                                {% elif payment.status == 'pending' %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-credit-card fa-3x mb-3"></i>
+                <p>No payment history available</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Business Details Modal -->
+<div class="modal fade" id="businessDetailsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Business Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="businessDetailsContent">
+                    <!-- Content will be loaded dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function refreshData() {
+    location.reload();
+}
+
+function viewBusinessDetails(businessId) {
+    // Find business data (in a real app, this would be an AJAX call)
+    const business = {{ businesses | tojson }}.find(b => b.id === businessId);
+    
+    if (business) {
+        const content = `
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Business Name:</strong> ${business.name}</p>
+                    <p><strong>Owner Email:</strong> ${business.owner_email}</p>
+                    <p><strong>Phone:</strong> ${business.phone}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Business ID:</strong> <code>${business.id}</code></p>
+                    <p><strong>Registered:</strong> ${new Date(business.created_at).toLocaleDateString()}</p>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('businessDetailsContent').innerHTML = content;
+        const modal = new bootstrap.Modal(document.getElementById('businessDetailsModal'));
+        modal.show();
+    }
+}
+
+function manageLicense(businessId) {
+    // In a real application, this would open a license management interface
+    alert('License management feature coming soon for business ID: ' + businessId);
+}
+
+// Auto-refresh every 30 seconds for real-time updates
+setInterval(function() {
+    // Only refresh if there are pending payments
+    if ({{ stats.pending_payments }} > 0) {
+        // Could implement AJAX refresh here instead of full page reload
+        console.log('Checking for new payments...');
+    }
+}, 30000);
+</script>
+{% endblock %}
