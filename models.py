@@ -211,6 +211,7 @@ class Settings(db.Model):
     business_name = db.Column(db.String(200))
     logo_url = db.Column(db.String(500))
     paybill = db.Column(db.String(20))
+    till_number = db.Column(db.String(20))
     footer_text = db.Column(db.Text)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     
