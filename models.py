@@ -1,10 +1,28 @@
 from datetime import datetime, timedelta
 from flask_login import UserMixin
-from replit import db
-import json
+from app import db
 import uuid
+import json
 
-class User(UserMixin):
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    business_name = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default='admin')
+    business_id = db.Column(db.String(36), nullable=False, unique=True, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    # Relationships
+    products = db.relationship('Product', backref='business_owner', lazy=True, cascade='all, delete-orphan')
+    sales = db.relationship('Sale', backref='business_owner', lazy=True, cascade='all, delete-orphan')
+    payments = db.relationship('Payment', backref='business_owner', lazy=True, cascade='all, delete-orphan')
+    license_info = db.relationship('License', backref='business_owner', lazy=True, uselist=False, cascade='all, delete-orphan')
+    settings = db.relationship('Settings', backref='business_owner', lazy=True, uselist=False, cascade='all, delete-orphan')
+    
     def __init__(self, email, business_name, phone, password_hash, role='admin', business_id=None):
         self.email = email
         self.business_name = business_name
@@ -12,51 +30,31 @@ class User(UserMixin):
         self.password_hash = password_hash
         self.role = role
         self.business_id = business_id or str(uuid.uuid4())
-        self.created_at = datetime.now().isoformat()
     
     def get_id(self):
         return self.email
     
     @staticmethod
     def get(email):
-        user_data = db.get(f"users:{email}")
-        if user_data:
-            data = json.loads(user_data)
-            user = User(
-                email=data['email'],
-                business_name=data['business_name'],
-                phone=data['phone'],
-                password_hash=data['password_hash'],
-                role=data.get('role', 'admin'),
-                business_id=data.get('business_id')
-            )
-            user.created_at = data.get('created_at')
-            return user
-        return None
+        return User.query.filter_by(email=email).first()
     
     def save(self):
-        user_data = {
-            'email': self.email,
-            'business_name': self.business_name,
-            'phone': self.phone,
-            'password_hash': self.password_hash,
-            'role': self.role,
-            'business_id': self.business_id,
-            'created_at': self.created_at
-        }
-        db[f"users:{self.email}"] = json.dumps(user_data)
-        
-        # Also save business info
-        business_data = {
-            'id': self.business_id,
-            'name': self.business_name,
-            'owner_email': self.email,
-            'phone': self.phone,
-            'created_at': self.created_at
-        }
-        db[f"business:{self.business_id}"] = json.dumps(business_data)
+        if not User.query.filter_by(email=self.email).first():
+            db.session.add(self)
+        db.session.commit()
 
-class Product:
+class Product(db.Model):
+    __tablename__ = 'products'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.String(36), nullable=False, unique=True, index=True)
+    business_id = db.Column(db.String(36), db.ForeignKey('users.business_id'), nullable=False, index=True)
+    name = db.Column(db.String(200), nullable=False)
+    price = db.Column(db.Numeric(10, 2), nullable=False)
+    category = db.Column(db.String(100))
+    stock_quantity = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
     def __init__(self, business_id, name, price, category, stock_quantity=0, product_id=None):
         self.product_id = product_id or str(uuid.uuid4())
         self.business_id = business_id
@@ -64,187 +62,157 @@ class Product:
         self.price = float(price)
         self.category = category
         self.stock_quantity = int(stock_quantity)
-        self.created_at = datetime.now().isoformat()
     
     @staticmethod
     def get_all(business_id):
-        products_data = db.get(f"products:{business_id}")
-        if products_data:
-            products_list = json.loads(products_data)
-            return [Product(
-                business_id=p['business_id'],
-                name=p['name'],
-                price=p['price'],
-                category=p['category'],
-                stock_quantity=p['stock_quantity'],
-                product_id=p['product_id']
-            ) for p in products_list]
-        return []
+        return Product.query.filter_by(business_id=business_id).all()
     
     @staticmethod
     def save_all(business_id, products):
-        products_data = []
         for product in products:
-            products_data.append({
-                'product_id': product.product_id,
-                'business_id': product.business_id,
-                'name': product.name,
-                'price': product.price,
-                'category': product.category,
-                'stock_quantity': product.stock_quantity,
-                'created_at': product.created_at
-            })
-        db[f"products:{business_id}"] = json.dumps(products_data)
+            existing = Product.query.filter_by(product_id=product.product_id).first()
+            if existing:
+                existing.name = product.name
+                existing.price = product.price
+                existing.category = product.category
+                existing.stock_quantity = product.stock_quantity
+            else:
+                db.session.add(product)
+        db.session.commit()
 
-class Sale:
+class Sale(db.Model):
+    __tablename__ = 'sales'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    sale_id = db.Column(db.String(36), nullable=False, unique=True, index=True)
+    business_id = db.Column(db.String(36), db.ForeignKey('users.business_id'), nullable=False, index=True)
+    items = db.Column(db.Text, nullable=False)  # JSON string
+    total = db.Column(db.Numeric(10, 2), nullable=False)
+    payment_method = db.Column(db.String(50), nullable=False)
+    mpesa_ref = db.Column(db.String(100))
+    customer_name = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
     def __init__(self, business_id, items, total, payment_method, mpesa_ref=None, customer_name=None, sale_id=None):
         self.sale_id = sale_id or str(uuid.uuid4())
         self.business_id = business_id
-        self.items = items  # List of {'product_id', 'name', 'price', 'quantity'}
+        self.items = json.dumps(items) if isinstance(items, (list, dict)) else items
         self.total = float(total)
         self.payment_method = payment_method
         self.mpesa_ref = mpesa_ref
         self.customer_name = customer_name
-        self.created_at = datetime.now().isoformat()
+    
+    @property
+    def items_list(self):
+        return json.loads(self.items) if self.items else []
     
     @staticmethod
     def get_all(business_id):
-        sales_data = db.get(f"sales:{business_id}")
-        if sales_data:
-            sales_list = json.loads(sales_data)
-            return [Sale(
-                business_id=s['business_id'],
-                items=s['items'],
-                total=s['total'],
-                payment_method=s['payment_method'],
-                mpesa_ref=s.get('mpesa_ref'),
-                customer_name=s.get('customer_name'),
-                sale_id=s['sale_id']
-            ) for s in sales_list]
-        return []
+        return Sale.query.filter_by(business_id=business_id).all()
     
     @staticmethod
     def save_all(business_id, sales):
-        sales_data = []
         for sale in sales:
-            sales_data.append({
-                'sale_id': sale.sale_id,
-                'business_id': sale.business_id,
-                'items': sale.items,
-                'total': sale.total,
-                'payment_method': sale.payment_method,
-                'mpesa_ref': sale.mpesa_ref,
-                'customer_name': sale.customer_name,
-                'created_at': sale.created_at
-            })
-        db[f"sales:{business_id}"] = json.dumps(sales_data)
+            existing = Sale.query.filter_by(sale_id=sale.sale_id).first()
+            if not existing:
+                db.session.add(sale)
+        db.session.commit()
 
-class License:
+class License(db.Model):
+    __tablename__ = 'licenses'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    business_id = db.Column(db.String(36), db.ForeignKey('users.business_id'), nullable=False, unique=True, index=True)
+    status = db.Column(db.String(20), nullable=False, default='pending')
+    expiry_date = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
     def __init__(self, business_id, status='pending', expiry_date=None):
         self.business_id = business_id
-        self.status = status  # 'pending', 'active', 'expired'
+        self.status = status
         self.expiry_date = expiry_date
-        self.created_at = datetime.now().isoformat()
     
     @staticmethod
     def get(business_id):
-        license_data = db.get(f"licenses:{business_id}")
-        if license_data:
-            data = json.loads(license_data)
-            license_obj = License(
-                business_id=data['business_id'],
-                status=data['status'],
-                expiry_date=data.get('expiry_date')
-            )
-            license_obj.created_at = data.get('created_at')
-            return license_obj
-        return None
+        return License.query.filter_by(business_id=business_id).first()
     
     def save(self):
-        license_data = {
-            'business_id': self.business_id,
-            'status': self.status,
-            'expiry_date': self.expiry_date,
-            'created_at': self.created_at
-        }
-        db[f"licenses:{self.business_id}"] = json.dumps(license_data)
+        existing = License.query.filter_by(business_id=self.business_id).first()
+        if existing:
+            existing.status = self.status
+            existing.expiry_date = self.expiry_date
+        else:
+            db.session.add(self)
+        db.session.commit()
     
     def is_active(self):
         if self.status != 'active':
             return False
-        if self.expiry_date:
-            expiry = datetime.fromisoformat(self.expiry_date)
-            return datetime.now() < expiry
-        return False
+        if self.expiry_date and datetime.utcnow() > self.expiry_date:
+            return False
+        return True
 
-class Payment:
+class Payment(db.Model):
+    __tablename__ = 'payments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    payment_id = db.Column(db.String(36), nullable=False, unique=True, index=True)
+    business_id = db.Column(db.String(36), db.ForeignKey('users.business_id'), nullable=False, index=True)
+    mpesa_code = db.Column(db.String(100), nullable=False)
+    phone_number = db.Column(db.String(20), nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False, default=3000)
+    status = db.Column(db.String(20), nullable=False, default='pending')
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
     def __init__(self, business_id, mpesa_code, phone_number, amount=3000, status='pending', payment_id=None):
         self.payment_id = payment_id or str(uuid.uuid4())
         self.business_id = business_id
         self.mpesa_code = mpesa_code
         self.phone_number = phone_number
         self.amount = float(amount)
-        self.status = status  # 'pending', 'confirmed', 'rejected'
-        self.created_at = datetime.now().isoformat()
+        self.status = status
     
     @staticmethod
     def get_all(business_id):
-        payments_data = db.get(f"payments:{business_id}")
-        if payments_data:
-            payments_list = json.loads(payments_data)
-            return [Payment(
-                business_id=p['business_id'],
-                mpesa_code=p['mpesa_code'],
-                phone_number=p['phone_number'],
-                amount=p['amount'],
-                status=p['status'],
-                payment_id=p['payment_id']
-            ) for p in payments_list]
-        return []
+        return Payment.query.filter_by(business_id=business_id).all()
     
     @staticmethod
     def save_all(business_id, payments):
-        payments_data = []
         for payment in payments:
-            payments_data.append({
-                'payment_id': payment.payment_id,
-                'business_id': payment.business_id,
-                'mpesa_code': payment.mpesa_code,
-                'phone_number': payment.phone_number,
-                'amount': payment.amount,
-                'status': payment.status,
-                'created_at': payment.created_at
-            })
-        db[f"payments:{business_id}"] = json.dumps(payments_data)
+            existing = Payment.query.filter_by(payment_id=payment.payment_id).first()
+            if not existing:
+                db.session.add(payment)
+        db.session.commit()
 
-class Settings:
+class Settings(db.Model):
+    __tablename__ = 'settings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    business_id = db.Column(db.String(36), db.ForeignKey('users.business_id'), nullable=False, unique=True, index=True)
+    business_name = db.Column(db.String(200))
+    logo_url = db.Column(db.String(500))
+    paybill = db.Column(db.String(20))
+    footer_text = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
     def __init__(self, business_id, business_name=None, logo_url=None, paybill=None, footer_text=None):
         self.business_id = business_id
         self.business_name = business_name
         self.logo_url = logo_url
         self.paybill = paybill
-        self.footer_text = footer_text or "Thank you for your business!"
+        self.footer_text = footer_text
     
     @staticmethod
     def get(business_id):
-        settings_data = db.get(f"settings:{business_id}")
-        if settings_data:
-            data = json.loads(settings_data)
-            return Settings(
-                business_id=data['business_id'],
-                business_name=data.get('business_name'),
-                logo_url=data.get('logo_url'),
-                paybill=data.get('paybill'),
-                footer_text=data.get('footer_text')
-            )
-        return Settings(business_id)
+        return Settings.query.filter_by(business_id=business_id).first()
     
     def save(self):
-        settings_data = {
-            'business_id': self.business_id,
-            'business_name': self.business_name,
-            'logo_url': self.logo_url,
-            'paybill': self.paybill,
-            'footer_text': self.footer_text
-        }
-        db[f"settings:{self.business_id}"] = json.dumps(settings_data)
+        existing = Settings.query.filter_by(business_id=self.business_id).first()
+        if existing:
+            existing.business_name = self.business_name
+            existing.logo_url = self.logo_url
+            existing.paybill = self.paybill
+            existing.footer_text = self.footer_text
+        else:
+            db.session.add(self)
+        db.session.commit()
