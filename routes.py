@@ -374,7 +374,12 @@ def admin_panel():
     
     return redirect(url_for('superadmin_dashboard'))
 
-# Old admin_dashboard function removed to avoid conflicts
+@app.route('/admin/dashboard')
+@login_required
+@superadmin_required
+def admin_dashboard():
+    """Redirect to superadmin dashboard for consistency"""
+    return redirect(url_for('superadmin_dashboard'))
 
 @app.route('/admin/confirm-payment', methods=['POST'])
 @login_required
