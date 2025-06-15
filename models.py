@@ -44,7 +44,7 @@ class User(UserMixin, db.Model):
         db.session.commit()
     
     def get_id(self):
-        return self.email
+        return str(self.id)
     
     @staticmethod
     def get(email):

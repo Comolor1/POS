@@ -6,8 +6,12 @@ from app import login_manager, app
 from models import User
 
 @login_manager.user_loader
-def load_user(email):
-    return User.get(email)
+def load_user(user_id):
+    try:
+        # Convert user_id back to integer and query by id
+        return User.query.get(int(user_id))
+    except (ValueError, TypeError):
+        return None
 
 def check_license_required(f):
     """Decorator to check if user has active license"""
