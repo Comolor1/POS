@@ -70,6 +70,9 @@
                                 <li><a class="dropdown-item" href="{{ url_for('expenses') }}">
                                     <i class="fas fa-receipt"></i> Expenses
                                 </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('mpesa_transactions') }}">
+                                    <i class="fas fa-mobile-alt"></i> M-PESA Transactions
+                                </a></li>
                                 {% endif %}
                                 {% if current_user.role == 'admin' %}
                                 <li><a class="dropdown-item" href="{{ url_for('users') }}">

@@ -99,6 +99,30 @@ The system uses PostgreSQL as the primary database with the following key design
 - **Reliability**: Health checks, database ping verification, error handling
 - **Monitoring**: Logging configuration for debugging and system monitoring
 
+## M-PESA Till Integration
+
+### Business Till Number Configuration
+- **Settings Integration**: Businesses can configure their M-PESA Till Number in business settings
+- **Till Number Display**: Customer-facing till numbers shown in POS payment modal and receipts
+- **Validation**: Till number validation and setup prompts for new businesses
+
+### POS M-PESA Payment Flow
+- **Payment Modal**: Interactive M-PESA payment confirmation dialog
+- **Customer Details**: Collection of customer name, phone number, and M-PESA receipt code
+- **Payment Validation**: Real-time validation of phone numbers and receipt codes
+- **Transaction Recording**: Automatic creation of M-PESA transaction records linked to sales
+
+### M-PESA Transaction Management
+- **Transaction History**: Dedicated page for viewing all M-PESA transactions
+- **Payment Matching**: Automatic linking of M-PESA payments to sales receipts
+- **Status Tracking**: Confirmed, pending, and failed transaction status management
+- **Receipt Integration**: M-PESA details displayed on printed and digital receipts
+
+### Receipt System Enhancement
+- **M-PESA Details**: Receipt code, till number, and customer information on receipts
+- **Payment Method Indicators**: Clear distinction between cash and M-PESA payments
+- **Customer Information**: Optional customer name display on receipts
+
 ## Changelog
 
 ```
@@ -106,6 +130,7 @@ Changelog:
 - June 15, 2025. Initial setup
 - June 15, 2025. Fixed redirect loops in authentication system
 - June 15, 2025. Added logo upload functionality and receipt preview system
+- June 15, 2025. Implemented complete M-PESA till integration with payment processing
 ```
 
 ## User Preferences

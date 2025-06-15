@@ -667,6 +667,17 @@ def users():
     
     return render_template('users.html', users=business_users)
 
+@app.route('/mpesa-transactions')
+@login_required
+@check_license_required
+@role_required(['admin', 'manager'])
+def mpesa_transactions():
+    """View M-PESA transactions for the business"""
+    transactions = MpesaTransaction.get_all(current_user.business_id)
+    settings = Settings.get(current_user.business_id)
+    
+    return render_template('mpesa_transactions.html', transactions=transactions, settings=settings)
+
 # ========== SUPERADMIN ROUTES ==========
 
 @app.route('/admin/superadmin')

@@ -95,7 +95,7 @@
                 <div class="row">
                     {% for product in products %}
                     <div class="col-md-4 col-lg-3 mb-3 product-item" data-category="{{ product.category }}">
-                        <div class="card product-card h-100" onclick="addToCart('{{ product.product_id }}', '{{ product.name }}', {{ product.price }}, {{ product.stock_quantity }})">
+                        <div class="card product-card h-100" onclick="addToCart('{{ product.product_id }}', {{ product.name|tojson }}, {{ product.price }}, {{ product.stock_quantity }})">
                             <div class="card-body text-center">
                                 <div class="product-icon mb-2">
                                     <i class="fas fa-box fa-2x text-primary"></i>
