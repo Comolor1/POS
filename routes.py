@@ -41,6 +41,7 @@ def login():
         email = request.form['email'].lower().strip()
         password = request.form['password']
         
+        # First check main User table (business owners)
         user = User.get(email)
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
@@ -48,6 +49,12 @@ def login():
             # Check if superadmin
             if email == 'admin@comolor.com' or user.role == 'superadmin':
                 return redirect(url_for('admin_panel'))
+            
+            # Check if business is blocked
+            if user.is_blocked:
+                logout_user()
+                flash('Your business account has been suspended. Contact support.', 'error')
+                return redirect(url_for('login'))
             
             # Check license for regular users
             license_obj = License.get(user.business_id)
@@ -57,8 +64,46 @@ def login():
             
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('dashboard'))
-        else:
-            flash('Invalid email or password.', 'error')
+        
+        # If not found in main users, check BusinessUser table (cashiers/staff)
+        from models_extended import BusinessUser
+        business_user = BusinessUser.get_by_email(email)
+        if business_user and check_password_hash(business_user.password_hash, password):
+            if not business_user.is_active:
+                flash('Your account has been deactivated. Contact your manager.', 'error')
+                return redirect(url_for('login'))
+            
+            # Get the main business user to check license and blocking status
+            main_user = User.query.filter_by(business_id=business_user.business_id).first()
+            if not main_user:
+                flash('Business account not found. Contact support.', 'error')
+                return redirect(url_for('login'))
+            
+            # Check if business is blocked
+            if main_user.is_blocked:
+                flash('This business account has been suspended. Contact support.', 'error')
+                return redirect(url_for('login'))
+            
+            # Check license status
+            license_obj = License.get(business_user.business_id)
+            if not license_obj or not license_obj.is_active():
+                flash('Business license has expired. Contact your manager to renew.', 'warning')
+                return redirect(url_for('index'))
+            
+            # Create a user-like object for flask-login compatibility
+            business_user.business_name = main_user.business_name
+            business_user.email = business_user.email
+            business_user.id = business_user.id
+            
+            login_user(business_user)
+            
+            # Redirect cashiers directly to POS system
+            if business_user.role == 'cashier':
+                return redirect(url_for('pos'))
+            else:
+                return redirect(url_for('dashboard'))
+        
+        flash('Invalid email or password.', 'error')
     
     return render_template('login.html')
 

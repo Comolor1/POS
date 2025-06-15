@@ -1,4 +1,5 @@
 from datetime import datetime
+from flask_login import UserMixin
 from app import db
 import uuid
 import json
@@ -65,7 +66,7 @@ class Expense(db.Model):
             db.session.add(self)
         db.session.commit()
 
-class BusinessUser(db.Model):
+class BusinessUser(UserMixin, db.Model):
     __tablename__ = 'business_users'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -103,6 +104,9 @@ class BusinessUser(db.Model):
     def deactivate(self):
         self.is_active = False
         db.session.commit()
+    
+    def get_id(self):
+        return str(self.id)
 
 class GlobalSettings(db.Model):
     __tablename__ = 'global_settings'

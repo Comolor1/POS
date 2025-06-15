@@ -26,10 +26,16 @@ def check_license_required(f):
             if request.endpoint == 'pay_license':
                 return f(*args, **kwargs)
             
+            # Get business_id (works for both User and BusinessUser objects)
+            business_id = getattr(current_user, 'business_id', None)
+            if not business_id:
+                flash('Business account error. Contact support.', 'error')
+                return redirect(url_for('login'))
+            
             # Check license status
-            license_obj = License.get(current_user.business_id)
+            license_obj = License.get(business_id)
             if not license_obj or not license_obj.is_active():
-                flash('Your license has expired. Renew to access system.', 'error')
+                flash('Your license has expired. All data is safely preserved and will be restored when you renew.', 'warning')
                 return redirect(url_for('pay_license'))
         
         return f(*args, **kwargs)
