@@ -325,6 +325,9 @@ def reports():
 @role_required(['admin'])
 def settings():
     settings = Settings.get(current_user.business_id)
+    if not settings:
+        settings = Settings(current_user.business_id, business_name=current_user.business_name)
+        settings.save()
     
     if request.method == 'POST':
         action = request.form.get('action')
@@ -350,9 +353,10 @@ def settings():
             else:
                 # Update password
                 user = User.get(current_user.email)
-                user.password_hash = generate_password_hash(new_password)
-                user.save()
-                flash('Password changed successfully!', 'success')
+                if user:
+                    user.password_hash = generate_password_hash(new_password)
+                    user.save()
+                    flash('Password changed successfully!', 'success')
         
         return redirect(url_for('settings'))
     
@@ -467,3 +471,81 @@ def date_filter(date_string):
         return dt.strftime('%d/%m/%Y')
     except:
         return date_string
+
+@app.route('/customers', methods=['GET', 'POST'])
+@login_required
+@check_license_required
+@role_required(['admin', 'manager'])
+def customers():
+    from models_extended import Customer
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action == 'add':
+            name = request.form['name'].strip()
+            email = request.form.get('email', '').strip()
+            phone = request.form.get('phone', '').strip()
+            address = request.form.get('address', '').strip()
+            
+            customer = Customer(
+                business_id=current_user.business_id,
+                name=name,
+                email=email if email else None,
+                phone=phone if phone else None,
+                address=address if address else None
+            )
+            customer.save()
+            
+            flash('Customer added successfully!', 'success')
+    
+    customers = Customer.get_all(current_user.business_id)
+    
+    return render_template('customers.html', customers=customers)
+
+@app.route('/expenses', methods=['GET', 'POST'])
+@login_required
+@check_license_required
+@role_required(['admin', 'manager'])
+def expenses():
+    from models_extended import Expense
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action == 'add':
+            category = request.form['category'].strip()
+            description = request.form['description'].strip()
+            amount = float(request.form['amount'])
+            expense_date = request.form.get('expense_date')
+            
+            # Parse date
+            if expense_date:
+                expense_date = datetime.strptime(expense_date, '%Y-%m-%d').date()
+            
+            expense = Expense(
+                business_id=current_user.business_id,
+                category=category,
+                description=description,
+                amount=amount,
+                date=expense_date
+            )
+            expense.save()
+            
+            flash('Expense added successfully!', 'success')
+    
+    expenses = Expense.get_all(current_user.business_id)
+    
+    # Calculate totals by category
+    category_totals = {}
+    for expense in expenses:
+        if expense.category not in category_totals:
+            category_totals[expense.category] = 0
+        category_totals[expense.category] += float(expense.amount)
+    
+    total_expenses = sum(float(e.amount) for e in expenses)
+    
+    return render_template('expenses.html', 
+                         expenses=expenses, 
+                         category_totals=category_totals,
+                         total_expenses=total_expenses)

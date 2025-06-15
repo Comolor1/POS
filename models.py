@@ -31,6 +31,17 @@ class User(UserMixin, db.Model):
         self.role = role
         self.business_id = business_id or str(uuid.uuid4())
     
+    def update_password(self, new_password_hash):
+        self.password_hash = new_password_hash
+        db.session.commit()
+    
+    def update_business_info(self, business_name=None, phone=None):
+        if business_name:
+            self.business_name = business_name
+        if phone:
+            self.phone = phone
+        db.session.commit()
+    
     def get_id(self):
         return self.email
     
@@ -39,8 +50,15 @@ class User(UserMixin, db.Model):
         return User.query.filter_by(email=email).first()
     
     def save(self):
-        if not User.query.filter_by(email=self.email).first():
+        existing_user = User.query.filter_by(email=self.email).first()
+        if not existing_user:
             db.session.add(self)
+        else:
+            # Update existing user
+            existing_user.business_name = self.business_name
+            existing_user.phone = self.phone
+            existing_user.password_hash = self.password_hash
+            existing_user.role = self.role
         db.session.commit()
 
 class Product(db.Model):

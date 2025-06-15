@@ -29,7 +29,7 @@
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    {% if current_user.email == 'admin@comolor.com' %}
+                    {% if current_user.email == 'admin@comolor.com' or current_user.role == 'superadmin' %}
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
                                 <i class="fas fa-tachometer-alt"></i> Admin Dashboard
@@ -72,14 +72,14 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user"></i> 
-                            {% if current_user.email == 'admin@comolor.com' %}
+                            {% if current_user.email == 'admin@comolor.com' or current_user.role == 'superadmin' %}
                                 Superadmin
                             {% else %}
                                 {{ current_user.business_name }}
                             {% endif %}
                         </a>
                         <ul class="dropdown-menu">
-                            {% if current_user.email != 'admin@comolor.com' %}
+                            {% if current_user.email != 'admin@comolor.com' and current_user.role != 'superadmin' %}
                             <li><a class="dropdown-item" href="{{ url_for('settings') }}">
                                 <i class="fas fa-cog"></i> Settings
                             </a></li>
