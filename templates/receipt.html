@@ -229,11 +229,27 @@
                     </span>
                 </div>
                 
-                {% if sale.payment_method == 'mpesa' and sale.mpesa_ref %}
-                <div class="d-flex justify-content-between mt-1">
-                    <span><strong>M-PESA Ref:</strong></span>
-                    <span>{{ sale.mpesa_ref }}</span>
-                </div>
+                {% if sale.payment_method == 'mpesa' %}
+                    {% if sale.mpesa_ref %}
+                    <div class="d-flex justify-content-between mt-1">
+                        <span><strong>M-PESA Receipt:</strong></span>
+                        <span>{{ sale.mpesa_ref }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if settings.till_number %}
+                    <div class="d-flex justify-content-between mt-1">
+                        <span><strong>Till Number:</strong></span>
+                        <span>{{ settings.till_number }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if sale.customer_name %}
+                    <div class="d-flex justify-content-between mt-1">
+                        <span><strong>Customer:</strong></span>
+                        <span>{{ sale.customer_name }}</span>
+                    </div>
+                    {% endif %}
                 {% endif %}
                 
                 <div class="d-flex justify-content-between mt-1">

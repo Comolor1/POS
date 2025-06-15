@@ -7,7 +7,7 @@ import uuid
 
 from app import app, db
 from models import User, Product, Sale, License, Payment, Settings
-from models_extended import Customer, Expense, BusinessUser, GlobalSettings, AuditLog
+from models_extended import Customer, Expense, BusinessUser, GlobalSettings, AuditLog, MpesaTransaction
 from auth import check_license_required, role_required, superadmin_required, check_business_blocked
 from utils import get_all_businesses, get_all_payments, calculate_total_revenue, format_currency, calculate_daily_sales, calculate_monthly_sales
 
@@ -244,6 +244,8 @@ def process_sale():
     payment_method = request.form['payment_method']
     mpesa_ref = request.form.get('mpesa_ref', '').strip()
     customer_name = request.form.get('customer_name', '').strip()
+    customer_phone = request.form.get('customer_phone', '').strip()
+    mpesa_receipt_code = request.form.get('mpesa_receipt_code', '').strip()
     
     if not cart_items:
         flash('Cart is empty. Please add items before processing sale.', 'error')
@@ -264,6 +266,33 @@ def process_sale():
     )
     sales.append(new_sale)
     Sale.save_all(current_user.business_id, sales)
+    
+    # Handle M-PESA transaction recording
+    if payment_method == 'mpesa' and mpesa_receipt_code and customer_phone:
+        from models_extended import MpesaTransaction
+        
+        # Get business settings for till number
+        settings = Settings.get(current_user.business_id)
+        till_number = settings.till_number if settings else 'Not Set'
+        
+        # Check if transaction already exists
+        existing_transaction = MpesaTransaction.get_by_receipt_code(mpesa_receipt_code)
+        if not existing_transaction:
+            # Create new M-PESA transaction record
+            mpesa_transaction = MpesaTransaction(
+                business_id=current_user.business_id,
+                mpesa_receipt_code=mpesa_receipt_code,
+                customer_phone=customer_phone,
+                amount=total,
+                till_number=till_number,
+                customer_name=customer_name,
+                sale_id=new_sale.sale_id,
+                status='confirmed'
+            )
+            mpesa_transaction.save()
+        else:
+            # Link existing transaction to this sale
+            existing_transaction.link_to_sale(new_sale.sale_id)
     
     # Update product stock
     products = Product.get_all(current_user.business_id)

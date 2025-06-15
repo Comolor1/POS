@@ -213,10 +213,8 @@ function processSale() {
         return;
     }
     
-    // Get form values
+    // Get payment method
     const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
-    const mpesaRef = document.getElementById('mpesa-ref')?.value?.trim();
-    const customerName = document.getElementById('customer-name')?.value?.trim();
     
     // Validation
     if (!paymentMethod) {
@@ -224,34 +222,72 @@ function processSale() {
         return;
     }
     
-    if (paymentMethod === 'mpesa' && !mpesaRef) {
-        showNotification('Please enter M-PESA reference code', 'error');
-        document.getElementById('mpesa-ref').focus();
+    // Handle M-PESA payment
+    if (paymentMethod === 'mpesa') {
+        // Show M-PESA payment modal
+        document.getElementById('modal-amount').textContent = formatCurrency(cartTotal).replace('KES ', '');
+        const mpesaModal = new bootstrap.Modal(document.getElementById('mpesaPaymentModal'));
+        mpesaModal.show();
         return;
     }
     
-    // Confirm sale
-    const confirmMessage = `Process sale of ${formatCurrency(cartTotal)}?`;
-    if (!confirm(confirmMessage)) {
+    // Handle cash payment
+    if (paymentMethod === 'cash') {
+        const customerName = document.getElementById('customer-name')?.value?.trim();
+        
+        // Confirm sale
+        const confirmMessage = `Process cash sale of ${formatCurrency(cartTotal)}?`;
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+        
+        // Prepare form data
+        document.getElementById('form-cart-items').value = JSON.stringify(cart);
+        document.getElementById('form-payment-method').value = paymentMethod;
+        document.getElementById('form-customer-name').value = customerName || '';
+        
+        // Submit form
+        document.getElementById('sale-form').submit();
+    }
+}
+
+// Confirm M-PESA payment and submit form
+function confirmMpesaPayment() {
+    const customerName = document.getElementById('customer_name').value.trim();
+    const customerPhone = document.getElementById('customer_phone').value.trim();
+    const mpesaReceiptCode = document.getElementById('mpesa_receipt_code').value.trim().toUpperCase();
+    
+    if (!customerPhone || !mpesaReceiptCode) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    // Phone number validation
+    if (!customerPhone.match(/^0\d{9}$/)) {
+        showNotification('Please enter a valid phone number (e.g., 0712345678)', 'error');
+        return;
+    }
+    
+    // Receipt code validation (flexible length)
+    if (mpesaReceiptCode.length < 8) {
+        showNotification('Please enter a valid M-PESA receipt code', 'error');
         return;
     }
     
     // Prepare form data
     document.getElementById('form-cart-items').value = JSON.stringify(cart);
-    document.getElementById('form-payment-method').value = paymentMethod;
-    document.getElementById('form-mpesa-ref').value = mpesaRef || '';
-    document.getElementById('form-customer-name').value = customerName || '';
+    document.getElementById('form-payment-method').value = 'mpesa';
+    document.getElementById('form-mpesa-ref').value = mpesaReceiptCode;
+    document.getElementById('form-customer-name').value = customerName;
+    document.getElementById('form-customer-phone').value = customerPhone;
+    document.getElementById('form-mpesa-receipt-code').value = mpesaReceiptCode;
     
-    // Show processing state
-    const processButton = event.target;
-    const originalText = processButton.innerHTML;
-    processButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-    processButton.disabled = true;
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('mpesaPaymentModal'));
+    modal.hide();
     
     // Submit form
-    setTimeout(() => {
-        document.getElementById('sale-form').submit();
-    }, 500);
+    document.getElementById('sale-form').submit();
 }
 
 // Category filtering
