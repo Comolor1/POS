@@ -104,6 +104,8 @@ The system uses PostgreSQL as the primary database with the following key design
 ```
 Changelog:
 - June 15, 2025. Initial setup
+- June 15, 2025. Fixed redirect loops in authentication system
+- June 15, 2025. Added logo upload functionality and receipt preview system
 ```
 
 ## User Preferences
