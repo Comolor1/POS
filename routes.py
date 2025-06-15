@@ -549,3 +549,47 @@ def expenses():
                          expenses=expenses, 
                          category_totals=category_totals,
                          total_expenses=total_expenses)
+
+@app.route('/users', methods=['GET', 'POST'])
+@login_required
+@check_license_required
+@role_required(['admin'])
+def users():
+    from models_extended import BusinessUser
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action == 'add':
+            name = request.form['name'].strip()
+            email = request.form['email'].lower().strip()
+            password = request.form['password']
+            role = request.form['role']
+            
+            # Check if user already exists
+            if BusinessUser.get_by_email(email):
+                flash('Email already exists. Please choose a different email.', 'error')
+            else:
+                password_hash = generate_password_hash(password)
+                user = BusinessUser(
+                    business_id=current_user.business_id,
+                    name=name,
+                    email=email,
+                    password_hash=password_hash,
+                    role=role
+                )
+                user.save()
+                flash('User added successfully!', 'success')
+        
+        elif action == 'deactivate':
+            user_id = request.form['user_id']
+            users = BusinessUser.get_all(current_user.business_id)
+            for user in users:
+                if user.user_id == user_id:
+                    user.deactivate()
+                    flash('User deactivated successfully!', 'success')
+                    break
+    
+    business_users = BusinessUser.get_all(current_user.business_id)
+    
+    return render_template('users.html', users=business_users)

@@ -46,6 +46,7 @@ login_manager.login_message_category = 'info'
 with app.app_context():
     # Import models to ensure they're registered
     import models
+    import models_extended
     db.create_all()
     
     # Create superadmin user if it doesn't exist

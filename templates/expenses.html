@@ -17,26 +17,124 @@
         </div>
     </div>
     
-    <!-- Coming Soon Notice -->
-    <div class="card">
-        <div class="card-body text-center py-5">
-            <i class="fas fa-receipt fa-4x text-muted mb-4"></i>
-            <h4>Expense Tracking</h4>
-            <p class="text-muted">This feature is coming soon! You'll be able to:</p>
-            <ul class="list-unstyled">
-                <li><i class="fas fa-check text-success"></i> Record business expenses</li>
-                <li><i class="fas fa-check text-success"></i> Categorize expenses</li>
-                <li><i class="fas fa-check text-success"></i> Track spending patterns</li>
-                <li><i class="fas fa-check text-success"></i> Generate expense reports</li>
-                <li><i class="fas fa-check text-success"></i> Calculate profit margins</li>
-            </ul>
-            
-            <div class="mt-4">
-                <p class="text-muted">Focus on sales for now, and we'll help you track expenses soon.</p>
-                <a href="{{ url_for('pos') }}" class="btn btn-primary">
-                    <i class="fas fa-shopping-cart"></i> Go to POS
-                </a>
+    <!-- Expense Summary -->
+    {% if expenses %}
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5>Total Expenses</h5>
+                    <h3>{{ total_expenses | currency }}</h3>
+                </div>
             </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Top Categories</h6>
+                    {% for category, amount in category_totals.items() %}
+                    <div class="d-flex justify-content-between">
+                        <span>{{ category }}</span>
+                        <strong>{{ amount | currency }}</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Expenses Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Expense Records</h5>
+        </div>
+        <div class="card-body">
+            {% if expenses %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr>
+                            <td>{{ expense.date.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ expense.category }}</span>
+                            </td>
+                            <td>{{ expense.description }}</td>
+                            <td class="text-danger">{{ expense.amount | currency }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                <h5>No Expenses Recorded</h5>
+                <p class="text-muted">Start tracking your business expenses</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Expense Modal -->
+<div class="modal fade" id="addExpenseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Expense</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category *</label>
+                        <select class="form-select" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="Office Supplies">Office Supplies</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Rent">Rent</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Equipment">Equipment</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Food & Beverages">Food & Beverages</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description *</label>
+                        <input type="text" class="form-control" name="description" required 
+                               placeholder="Brief description of the expense">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount (KSH) *</label>
+                        <input type="number" class="form-control" name="amount" required 
+                               min="0" step="0.01" placeholder="0.00">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="expense_date" class="form-label">Date</label>
+                        <input type="date" class="form-control" name="expense_date">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Expense</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

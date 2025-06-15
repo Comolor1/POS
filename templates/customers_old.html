@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Customers - Comolor POS{% endblock %}
+
+{% block content %}
+<div class="customers-page">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Customers</h1>
+            <p class="text-muted">Manage your customer database</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                <i class="fas fa-plus"></i> Add Customer
+            </button>
+        </div>
+    </div>
+    
+    <!-- Coming Soon Notice -->
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-users fa-4x text-muted mb-4"></i>
+            <h4>Customer Management</h4>
+            <p class="text-muted">This feature is coming soon! You'll be able to:</p>
+            <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success"></i> Store customer contact information</li>
+                <li><i class="fas fa-check text-success"></i> Track customer purchase history</li>
+                <li><i class="fas fa-check text-success"></i> Create customer loyalty programs</li>
+                <li><i class="fas fa-check text-success"></i> Send promotional messages</li>
+            </ul>
+            
+            <div class="mt-4">
+                <p class="text-muted">For now, you can add customer names during sales at the POS.</p>
+                <a href="{{ url_for('pos') }}" class="btn btn-primary">
+                    <i class="fas fa-shopping-cart"></i> Go to POS
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

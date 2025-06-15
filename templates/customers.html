@@ -17,25 +17,85 @@
         </div>
     </div>
     
-    <!-- Coming Soon Notice -->
+    <!-- Customers Table -->
     <div class="card">
-        <div class="card-body text-center py-5">
-            <i class="fas fa-users fa-4x text-muted mb-4"></i>
-            <h4>Customer Management</h4>
-            <p class="text-muted">This feature is coming soon! You'll be able to:</p>
-            <ul class="list-unstyled">
-                <li><i class="fas fa-check text-success"></i> Store customer contact information</li>
-                <li><i class="fas fa-check text-success"></i> Track customer purchase history</li>
-                <li><i class="fas fa-check text-success"></i> Create customer loyalty programs</li>
-                <li><i class="fas fa-check text-success"></i> Send promotional messages</li>
-            </ul>
-            
-            <div class="mt-4">
-                <p class="text-muted">For now, you can add customer names during sales at the POS.</p>
-                <a href="{{ url_for('pos') }}" class="btn btn-primary">
-                    <i class="fas fa-shopping-cart"></i> Go to POS
-                </a>
+        <div class="card-header">
+            <h5 class="mb-0">Customer Database</h5>
+        </div>
+        <div class="card-body">
+            {% if customers %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Address</th>
+                            <th>Added</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>{{ customer.name }}</td>
+                            <td>{{ customer.email or '-' }}</td>
+                            <td>{{ customer.phone or '-' }}</td>
+                            <td>{{ customer.address or '-' }}</td>
+                            <td>{{ customer.created_at | datetime }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5>No Customers Added</h5>
+                <p class="text-muted">Start building your customer database</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Customer Modal -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Customer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Customer Name *</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" name="email">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" name="phone">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" name="address" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Customer</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
