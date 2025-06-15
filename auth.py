@@ -15,7 +15,7 @@ def check_license_required(f):
     def decorated_function(*args, **kwargs):
         if current_user.is_authenticated:
             # Skip license check for superadmin
-            if current_user.email == 'admin@comolor.com':
+            if current_user.email == 'admin@comolor.com' or current_user.role == 'superadmin':
                 return f(*args, **kwargs)
             
             # Check license status

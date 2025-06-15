@@ -42,11 +42,46 @@ login_manager.login_view = 'login'
 login_manager.login_message = 'Please log in to access this page.'
 login_manager.login_message_category = 'info'
 
-# Create database tables
+# Create database tables and initialize superadmin
 with app.app_context():
     # Import models to ensure they're registered
     import models
     db.create_all()
+    
+    # Create superadmin user if it doesn't exist
+    from werkzeug.security import generate_password_hash
+    superadmin_email = 'admin@comolor.com'
+    superadmin = models.User.get(superadmin_email)
+    
+    if not superadmin:
+        # Create superadmin account
+        superadmin_password = generate_password_hash('admin123')
+        superadmin = models.User(
+            email=superadmin_email,
+            business_name='Comolor POS Admin',
+            phone='+254700000000',
+            password_hash=superadmin_password,
+            role='superadmin'
+        )
+        superadmin.save()
+        
+        # Create active license for superadmin (never expires)
+        license_obj = models.License(
+            business_id=superadmin.business_id,
+            status='active',
+            expiry_date=None
+        )
+        license_obj.save()
+        
+        # Create settings for superadmin
+        settings = models.Settings(
+            business_id=superadmin.business_id,
+            business_name='Comolor POS Admin',
+            footer_text='Comolor POS - Point of Sale System'
+        )
+        settings.save()
+        
+        print("Superadmin account created: admin@comolor.com / admin123")
 
 # Import routes after app creation to avoid circular imports
 from routes import *

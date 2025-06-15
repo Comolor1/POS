@@ -27,7 +27,7 @@ def login():
             login_user(user)
             
             # Check if superadmin
-            if email == 'admin@comolor.com':
+            if email == 'admin@comolor.com' or user.role == 'superadmin':
                 return redirect(url_for('admin_panel'))
             
             # Check license for regular users
@@ -363,7 +363,7 @@ def settings():
 
 @app.route('/admin')
 def admin_panel():
-    if not current_user.is_authenticated or current_user.email != 'admin@comolor.com':
+    if not current_user.is_authenticated or (current_user.email != 'admin@comolor.com' and current_user.role != 'superadmin'):
         flash('Access denied. Superadmin only.', 'error')
         return redirect(url_for('login'))
     
@@ -372,7 +372,7 @@ def admin_panel():
 @app.route('/admin/dashboard')
 @login_required
 def admin_dashboard():
-    if current_user.email != 'admin@comolor.com':
+    if current_user.email != 'admin@comolor.com' and current_user.role != 'superadmin':
         flash('Access denied. Superadmin only.', 'error')
         return redirect(url_for('login'))
     
@@ -410,7 +410,7 @@ def admin_dashboard():
 @app.route('/admin/confirm-payment', methods=['POST'])
 @login_required
 def confirm_payment():
-    if current_user.email != 'admin@comolor.com':
+    if current_user.email != 'admin@comolor.com' and current_user.role != 'superadmin':
         flash('Access denied.', 'error')
         return redirect(url_for('login'))
     
