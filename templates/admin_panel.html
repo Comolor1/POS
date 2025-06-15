@@ -284,7 +284,6 @@
                                 {% for payment in payments %}
                                     {% if payment.business_id == business.id and payment.status == 'confirmed' %}
                                         {% set business_license = 'active' %}
-                                        {% break %}
                                     {% endif %}
                                 {% endfor %}
                                 
