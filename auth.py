@@ -22,6 +22,10 @@ def check_license_required(f):
             if current_user.email == 'admin@comolor.com' or current_user.role == 'superadmin':
                 return f(*args, **kwargs)
             
+            # Skip license check if already on pay_license page to prevent redirect loop
+            if request.endpoint == 'pay_license':
+                return f(*args, **kwargs)
+            
             # Check license status
             license_obj = License.get(current_user.business_id)
             if not license_obj or not license_obj.is_active():

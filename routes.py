@@ -13,7 +13,21 @@ from utils import get_all_businesses, get_all_payments, calculate_total_revenue,
 
 @app.route('/')
 def index():
-    # Simple landing page without authentication checks
+    # Check if user is already logged in and redirect appropriately
+    if current_user.is_authenticated:
+        # Redirect superadmin to admin panel
+        if current_user.email == 'admin@comolor.com' or current_user.role == 'superadmin':
+            return redirect(url_for('admin_panel'))
+        
+        # Check license for regular users
+        license_obj = License.get(current_user.business_id)
+        if not license_obj or not license_obj.is_active():
+            return redirect(url_for('pay_license'))
+        
+        # User is authenticated and has active license - go to dashboard
+        return redirect(url_for('dashboard'))
+    
+    # Not logged in - show landing page
     return render_template('index.html')
 
 @app.route('/test')
@@ -372,10 +386,21 @@ def settings():
 
 @app.route('/admin')
 def admin_panel():
-    if not current_user.is_authenticated or (current_user.email != 'admin@comolor.com' and current_user.role != 'superadmin'):
-        flash('Access denied. Superadmin only.', 'error')
+    # If not authenticated, redirect to login
+    if not current_user.is_authenticated:
+        flash('Please log in to access admin panel.', 'info')
         return redirect(url_for('login'))
     
+    # If authenticated but not superadmin, redirect to appropriate page
+    if current_user.email != 'admin@comolor.com' and current_user.role != 'superadmin':
+        flash('Access denied. Superadmin privileges required.', 'error')
+        # Redirect regular users to dashboard or pay_license based on license status
+        license_obj = License.get(current_user.business_id)
+        if not license_obj or not license_obj.is_active():
+            return redirect(url_for('pay_license'))
+        return redirect(url_for('dashboard'))
+    
+    # User is authenticated superadmin
     return redirect(url_for('superadmin_dashboard'))
 
 @app.route('/admin/dashboard')
@@ -570,7 +595,8 @@ def users():
 
 # ========== SUPERADMIN ROUTES ==========
 
-@app.route('/admin')
+@app.route('/admin/superadmin')
+@login_required
 @superadmin_required
 def superadmin_dashboard():
     """Main superadmin dashboard"""
