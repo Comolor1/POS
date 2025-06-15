@@ -1,0 +1,139 @@
+Build a complete web-based POS system named **Comolor POS** using **Python (Flask)** and the built-in **replit.db** key-value store. Do not use SQLite or PostgreSQL. Include the following:
+
+---
+
+🌍 SYSTEM OVERVIEW:
+- Comolor POS is for Kenyan small businesses.
+- It is web-based, has monthly licensing, and restricts access when license expires.
+- It must include receipt printing, M-PESA Till licensing, Terms & Conditions, and business registration.
+
+---
+
+🧠 TECH STACK:
+- Python Flask
+- HTML, CSS (Bootstrap)
+- replit.db for database
+- Flask-Login for user auth
+- Fully works within Replit environment
+
+---
+
+🔐 USER ROLES:
+- **Superadmin** (developer/you)
+- **Admin** (shop owner)
+- **Manager**
+- **Cashier**
+
+Each Admin/business has isolated data.
+
+---
+
+📝 REGISTRATION & LOGIN:
+- Fields: business name, email, phone, password
+- Must accept Terms and Conditions (checkbox)
+- Block if not accepted
+- Redirect to license page after signup
+
+---
+
+📃 TERMS & CONDITIONS:
+- Page `/terms`
+- Contains licensing rules:
+  - License = KES 3,000/month
+  - Pay to **Till Number 123456**
+  - No refunds
+  - License required for access
+- Show checkbox in registration form
+
+---
+
+💳 LICENSE SYSTEM:
+- After registration, redirect to `/pay-license`
+- Input: M-PESA transaction code + phone number
+- Saved to `payments:{business_id}`
+- Superadmin logs in, confirms the payment manually in `/admin`
+- If confirmed:
+  - Store in `licenses:{business_id}` → status = "active", expiry = today + 30 days
+- System must check license status at every login and block expired users
+
+---
+
+🕒 AUTO LICENSE EXPIRY CHECK:
+- On each login and request:
+  - Load `licenses:{business_id}`
+  - If expired: redirect to `/pay-license` with message "Your license has expired. Renew to access system."
+
+---
+
+🛠 DATABASE STRUCTURE (replit.db keys):
+- `users:{email}` → user object
+- `business:{email}` → business info
+- `products:{business_id}` → list of product objects
+- `sales:{business_id}` → list of sales
+- `payments:{business_id}` → list of payment entries
+- `licenses:{business_id}` → license status and expiry
+- `settings:{business_id}` → footer, logo, Paybill, etc.
+
+---
+
+📦 POS MODULES:
+- Products & categories
+- Cart system
+- Customer management
+- Expense tracking
+- Sale history
+- Daily/monthly reports
+- Business settings
+- Role-based access
+
+---
+
+🧾 RECEIPT PRINTING:
+- After sale, show printable receipt:
+  - Business name, Paybill, items, subtotal, payment method (Cash/M-PESA), M-PESA ref
+  - Custom footer and logo
+- Template must work in print view
+
+---
+
+⚙️ SETTINGS PAGE (per business):
+- Change business name, logo
+- Set Paybill number
+- Change receipt footer
+- View license status
+- Change password
+
+---
+
+🧑‍💻 SUPERADMIN PANEL:
+- Hardcoded email: `admin@comolor.com`
+- Logs in at `/admin`
+- Views all businesses, license statuses
+- Confirms payments manually
+- Can block businesses or reset license
+- View total income from licensing
+
+---
+
+🛑 SYSTEM ACCESS CONTROL:
+- All protected routes must check:
+  - If user is logged in
+  - If license is active and not expired
+- If not: redirect to `/pay-license`
+
+---
+
+🎯 FINAL GOAL:
+Generate the **entire Flask app**:
+- All templates (HTML)
+- Routes for login, POS, admin, products, receipts
+- Database using `replit.db`
+- Auto license check
+- Manual payment confirmation
+- Terms & Conditions enforcement
+- Clean UI with role-based access
+- No PostgreSQL, no SQLite — fully runs on Replit
+
+---
+
+Ensure that everything works on Replit. All logic, pages, roles, and features should be included in one Flask project.
