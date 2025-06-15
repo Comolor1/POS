@@ -372,7 +372,7 @@ def admin_panel():
         flash('Access denied. Superadmin only.', 'error')
         return redirect(url_for('login'))
     
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('superadmin_dashboard'))
 
 # Old admin_dashboard function removed to avoid conflicts
 
@@ -410,7 +410,7 @@ def confirm_payment():
     else:
         flash('Payment rejected.', 'info')
     
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('superadmin_dashboard'))
 
 # Custom template filters
 @app.template_filter('currency')

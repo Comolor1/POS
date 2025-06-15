@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Business Management - Superadmin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            <div class="position-sticky pt-3">
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Superadmin Panel</span>
+                </h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('superadmin_dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin_businesses') }}">
+                            <i class="fas fa-building"></i> Businesses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_payments') }}">
+                            <i class="fas fa-credit-card"></i> Payments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_settings') }}">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_reports') }}">
+                            <i class="fas fa-chart-bar"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_audit_logs') }}">
+                            <i class="fas fa-list-alt"></i> Audit Logs
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Business Management</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{{ url_for('export_businesses') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-download"></i> Export Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Businesses Table -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">All Registered Businesses</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Business Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Registration Date</th>
+                                    <th>License Status</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for business in businesses %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ business.business_name }}</strong><br>
+                                        <small class="text-muted">ID: {{ business.business_id[:8] }}...</small>
+                                    </td>
+                                    <td>{{ business.email }}</td>
+                                    <td>{{ business.phone }}</td>
+                                    <td>{{ business.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if business.license_status == 'Active' %}
+                                            <span class="badge bg-success">Active</span>
+                                            {% if business.license_expiry %}
+                                                <br><small class="text-muted">Expires: {{ business.license_expiry.strftime('%Y-%m-%d') if business.license_expiry else 'N/A' }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-danger">Expired</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if business.is_blocked %}
+                                            <span class="badge bg-danger">Blocked</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('business_details', business_id=business.business_id) }}" 
+                                               class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            <form method="POST" action="{{ url_for('toggle_business_block', business_id=business.business_id) }}" style="display: inline;">
+                                                {% if business.is_blocked %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-success" 
+                                                            onclick="return confirm('Are you sure you want to unblock this business?')">
+                                                        <i class="fas fa-unlock"></i> Unblock
+                                                    </button>
+                                                {% else %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="return confirm('Are you sure you want to block this business?')">
+                                                        <i class="fas fa-ban"></i> Block
+                                                    </button>
+                                                {% endif %}
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<style>
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+.sidebar-heading {
+    font-size: .75rem;
+    text-transform: uppercase;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}System Reports - Superadmin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            <div class="position-sticky pt-3">
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Superadmin Panel</span>
+                </h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('superadmin_dashboard') }}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_businesses') }}">
+                            <i class="fas fa-building"></i> Businesses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_payments') }}">
+                            <i class="fas fa-credit-card"></i> Payments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_settings') }}">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin_reports') }}">
+                            <i class="fas fa-chart-bar"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_audit_logs') }}">
+                            <i class="fas fa-list-alt"></i> Audit Logs
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">System Reports</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{{ url_for('export_businesses') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-download"></i> Export Business Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Summary -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Total Revenue (All Time)</div>
+                                    <div class="h4 mb-0 font-weight-bold text-gray-800">KES {{ "%.2f"|format(total_revenue) }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-dollar-sign fa-3x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- License Status Distribution -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">License Status Distribution</h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="licenseChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">License Statistics</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h4 class="text-success">{{ license_stats.active }}</h4>
+                                        <p class="text-muted">Active Licenses</p>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h4 class="text-danger">{{ license_stats.expired }}</h4>
+                                        <p class="text-muted">Expired Licenses</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="text-center">
+                                        <h4 class="text-warning">{{ license_stats.pending }}</h4>
+                                        <p class="text-muted">Pending Licenses</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Revenue Chart -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Monthly Revenue (Last 12 Months)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" width="400" height="150"></canvas>
+                </div>
+            </div>
+
+            <!-- Business Registration Trends -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Business Registration Trends</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="registrationChart" width="400" height="150"></canvas>
+                </div>
+            </div>
+
+            <!-- Business Summary Table -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Business Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Business Name</th>
+                                    <th>Registration Date</th>
+                                    <th>License Status</th>
+                                    <th>Total Payments</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for business in businesses %}
+                                <tr>
+                                    <td>{{ business.business_name }}</td>
+                                    <td>{{ business.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% set license = business.license_info %}
+                                        {% if license and license.is_active() %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Expired</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ business.payments|length }}</td>
+                                    <td>
+                                        {% if business.is_blocked %}
+                                            <span class="badge bg-danger">Blocked</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// License Status Pie Chart
+var ctx1 = document.getElementById('licenseChart').getContext('2d');
+var licenseChart = new Chart(ctx1, {
+    type: 'pie',
+    data: {
+        labels: ['Active', 'Expired', 'Pending'],
+        datasets: [{
+            data: [{{ license_stats.active }}, {{ license_stats.expired }}, {{ license_stats.pending }}],
+            backgroundColor: ['#28a745', '#dc3545', '#ffc107']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+
+// Monthly Revenue Chart
+var ctx2 = document.getElementById('revenueChart').getContext('2d');
+var revenueChart = new Chart(ctx2, {
+    type: 'line',
+    data: {
+        labels: [{% for month in monthly_revenue.keys()|list|sort %}'{{ month }}'{{ ', ' if not loop.last }}{% endfor %}],
+        datasets: [{
+            label: 'Revenue (KES)',
+            data: [{% for month in monthly_revenue.keys()|list|sort %}{{ monthly_revenue[month] }}{{ ', ' if not loop.last }}{% endfor %}],
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Registration Trends Chart
+var ctx3 = document.getElementById('registrationChart').getContext('2d');
+var registrationChart = new Chart(ctx3, {
+    type: 'bar',
+    data: {
+        labels: [{% for month in registration_trends.keys()|list|sort %}'{{ month }}'{{ ', ' if not loop.last }}{% endfor %}],
+        datasets: [{
+            label: 'New Registrations',
+            data: [{% for month in registration_trends.keys()|list|sort %}{{ registration_trends[month] }}{{ ', ' if not loop.last }}{% endfor %}],
+            backgroundColor: '#28a745'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+
+<style>
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+.sidebar-heading {
+    font-size: .75rem;
+    text-transform: uppercase;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+
+.text-xs {
+    font-size: .7rem;
+}
+</style>
+{% endblock %}
