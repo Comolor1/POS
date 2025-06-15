@@ -103,3 +103,49 @@ class BusinessUser(db.Model):
     def deactivate(self):
         self.is_active = False
         db.session.commit()
+
+class GlobalSettings(db.Model):
+    __tablename__ = 'global_settings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    license_price = db.Column(db.Numeric(10, 2), nullable=False, default=3000)
+    till_number = db.Column(db.String(20), nullable=False, default='123456')
+    terms_content = db.Column(db.Text, nullable=False, default='Default terms and conditions')
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    @staticmethod
+    def get():
+        settings = GlobalSettings.query.first()
+        if not settings:
+            settings = GlobalSettings()
+            db.session.add(settings)
+            db.session.commit()
+        return settings
+    
+    def save(self):
+        self.updated_at = datetime.utcnow()
+        db.session.commit()
+
+class AuditLog(db.Model):
+    __tablename__ = 'audit_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    admin_email = db.Column(db.String(120), nullable=False)
+    action = db.Column(db.String(200), nullable=False)
+    target_business_id = db.Column(db.String(36))
+    details = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    def __init__(self, admin_email, action, target_business_id=None, details=None):
+        self.admin_email = admin_email
+        self.action = action
+        self.target_business_id = target_business_id
+        self.details = details
+    
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+    
+    @staticmethod
+    def get_all(limit=100):
+        return AuditLog.query.order_by(AuditLog.created_at.desc()).limit(limit).all()

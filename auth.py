@@ -47,3 +47,29 @@ def role_required(roles):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+def superadmin_required(f):
+    """Decorator to check if user is superadmin"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for('login'))
+        
+        # Only allow hardcoded superadmin account
+        if current_user.email != 'admin@comolor.com':
+            flash('Access denied. Superadmin privileges required.', 'error')
+            return redirect(url_for('dashboard'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+def check_business_blocked(f):
+    """Decorator to check if business is blocked"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.is_authenticated and current_user.email != 'admin@comolor.com':
+            if current_user.is_blocked:
+                flash('Your business account has been suspended. Contact support.', 'error')
+                return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
