@@ -511,7 +511,7 @@ def confirm_payment():
             license_obj = License(business_id)
         
         license_obj.status = 'active'
-        license_obj.expiry_date = (datetime.now() + timedelta(days=30)).isoformat()
+        license_obj.expiry_date = datetime.now() + timedelta(days=30)
         license_obj.save()
         
         flash('Payment confirmed and license activated!', 'success')
